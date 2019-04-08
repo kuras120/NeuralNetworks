@@ -10,10 +10,13 @@ class Perceptron:
 
     @staticmethod
     def unit_step_function(x, func_name):
-        if func_name == "AND":
+        if func_name == 'AND':
             if x > 0.5:
                 return 1
-        elif func_name == "OR":
+        elif func_name == 'OR':
+            if x >= 0.5:
+                return 1
+        elif func_name == 'XOR':
             if x == 0.5:
                 return 1
 
@@ -26,8 +29,7 @@ class Perceptron:
 
 
 if __name__ == "__main__":
-    name = "OR"
     p = Perceptron(2, np.array([0.5, 0.5]))
     for ar in [np.array([0, 0]), np.array([0, 1]), np.array([1, 0]), np.array([1, 1])]:
-        y = p(np.array(ar), name)
+        y = p(np.array(ar), 'XOR')
         print(ar, y)
