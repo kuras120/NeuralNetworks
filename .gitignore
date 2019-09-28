@@ -2,3 +2,5 @@
 \.idea/
 
 scratch/__pycache__/
+
+KNN/__pycache__/
