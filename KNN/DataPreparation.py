@@ -3,7 +3,7 @@ from sklearn import datasets
 
 
 class DataPreparation:
-    def __init__(self, training_samples, random_seed=42):
+    def __init__(self, training_samples, random_seed=None):
         iris = datasets.load_iris()
         self.iris_data = iris.data
         self.iris_labels = iris.target

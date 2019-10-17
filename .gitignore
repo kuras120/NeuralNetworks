@@ -1,6 +1,6 @@
 
+#JETBRAINS CONFIG FILES
 \.idea/
 
-scratch/__pycache__/
-
-KNN/__pycache__/
+#COMPILED SOURCE
+*.pyc
