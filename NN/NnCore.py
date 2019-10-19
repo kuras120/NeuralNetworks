@@ -18,4 +18,4 @@ class NnCore:
         error /= len(data)
         error_rate /= len(data)
 
-        return error, (round(error_rate * 100, 2)).__str__() + '%'
+        return error, (round(error_rate * 100, 2))

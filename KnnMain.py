@@ -5,10 +5,15 @@ from KNN.DataPreparation import DataPreparation
 
 
 if __name__ == '__main__':
+
+    # ************************ DATA INITIALIZATION ************************ #
+
     data_preparation = DataPreparation(100, None)
     learnset_data, learnset_labels = data_preparation.create_learn_data()
     testset_data, testset_labels = data_preparation.create_test_data()
 
+    # ******************************* TESTS ******************************* #
+    
     compatibility = Counter()
     print('Probki danych testowych na podstawie danych treningowych z glosowaniem: \n')
     for i in range(data_preparation.n_training_samples):
