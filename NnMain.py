@@ -1,22 +1,30 @@
+import copy
 from NN.NnCore import NnCore
-from NN.Perceptron import DataCell, Perceptron
+from NN.Perceptron import Perceptron
 from KNN.DataPreparation import DataPreparation
 
 
 if __name__ == '__main__':
-    nn = NnCore(1.01)
-    generator = DataPreparation(12)
+    nn = NnCore(1.1)
+    generator = DataPreparation(100)
     learn_data, learn_labels = generator.create_learn_data()
-    neurons = []
-    for i in range(len(learn_data)):
-        neuron_data = []
-        for j in range(len(learn_data[i])):
-            cell = DataCell(learn_data[i][j], 1 if (j + 1) % 2 == 0 else -1)
-            neuron_data.append(cell)
-        neuron = Perceptron(neuron_data, DataCell(1, 0.5 if (i + 1) % 2 == 0 else -0.5), learn_labels[i])
-        neurons.append(neuron)
+    neuron = Perceptron(len(learn_data[0]), 1)
 
-    error = 1.0
-    for i in range(3):
-        error, error_rate = nn.learn(neurons, 3)
+    smallest_error = 1
+    neuron_state = None
+    for _ in range(1000):
+        error, error_rate = nn.learn(neuron, learn_data, learn_labels, 3)
+        if error < smallest_error:
+            smallest_error = error
+            neuron_state = copy.deepcopy(neuron)
+
         print('Error: ', error, 'Error rate: ', error_rate)
+
+    print("Best neuron state with error: ", smallest_error)
+    print("Weights: ", neuron_state.weights)
+
+    print("Test data")
+    test_data, test_labels = generator.create_test_data()
+    neuron_state.set_data(test_data[0])
+    result = neuron_state.sigmoid_function(3)
+    print("Result: ", round(result), "Label: ", float(test_labels[0]))
