@@ -10,9 +10,10 @@ if __name__ == '__main__':
     # ************************ DATA INITIALIZATION ************************ #
 
     nn = NnCore(0.15)
-    generator = DataPreparation(125)
+    generator = DataPreparation(75)
     learn_data, learn_labels = generator.create_learn_data()
-    neuron = Perceptron(len(learn_data[0]), 0.5)
+    test_data, test_labels = generator.create_test_data()
+    neuron = Perceptron(len(learn_data[0]), 1.0)
 
     # ******************************* TESTS ******************************* #
 
@@ -29,7 +30,6 @@ if __name__ == '__main__':
             neuron_state = copy.deepcopy(neuron)
             print('Error: ', error, 'Error rate: ', error_rate.__str__() + "%")
             temp_error_rate = 0
-            test_data, test_labels = generator.create_test_data()
             for i in range(len(test_data)):
                 neuron_state.set_data(test_data[i])
                 result = neuron_state.sigmoid_function(3)
