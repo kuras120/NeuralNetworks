@@ -13,7 +13,7 @@ if __name__ == '__main__':
     testset_data, testset_labels = data_preparation.create_test_data()
 
     # ******************************* TESTS ******************************* #
-    
+
     compatibility = Counter()
     print('Probki danych testowych na podstawie danych treningowych z glosowaniem: \n')
     for i in range(data_preparation.n_training_samples):
