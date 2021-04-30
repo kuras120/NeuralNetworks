@@ -1,3 +1,5 @@
 numpy
 matplotlib
 scikit-learn
+unittest2
+psutil
