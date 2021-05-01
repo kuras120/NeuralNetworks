@@ -1,5 +1,6 @@
 numpy
+psutil
+unittest2
 matplotlib
 scikit-learn
-unittest2
-psutil
+jsbeautifier

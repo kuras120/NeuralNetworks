@@ -1,7 +1,7 @@
 import os
 import sys
 import json
-
+import jsbeautifier
 
 class Process:
     def __init__(self, reset_on_new, learning_mode, state_file_path):
@@ -23,9 +23,11 @@ class Process:
                 init_state = False
         absolute_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), state_file_path)
         if init_state and self.__reset_on_new:
+            self.__q_table[self.__hash] = []
             for i in range(len(self.__matrix)):
+                self.__q_table[self.__hash].append([])
                 for j in range(len(self.__matrix[i])):
-                    self.__q_table[str(i) + ':' + str(j) + ':' + self.__hash] = 0
+                    self.__q_table[self.__hash][i].append(0)
             with open(absolute_path, 'w') as state:
                 json.dump(self.__q_table, state)
             print('State saved in ' + absolute_path)
@@ -41,7 +43,7 @@ class Process:
         print('     Gracz: ' + self.__points[0])
         print('     AI: ' + self.__points[1])
         print('Stan:')
-        print(json.dumps(self.__q_table, indent=2))
+        print(jsbeautifier.beautify(json.dumps(self.__q_table), jsbeautifier.default_options()))
 
 
 if __name__ == '__main__':
