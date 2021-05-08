@@ -3,6 +3,7 @@ import sys
 import json
 import jsbeautifier
 
+
 class Process:
     def __init__(self, reset_on_new, learning_mode, state_file_path):
         self.__matrix = []
@@ -35,14 +36,17 @@ class Process:
             with open(absolute_path, 'r') as state:
                 self.__q_table = json.load(state)
 
+    def move(self):
+        pass
+
     def values(self):
-        print('Macierz stanu:')
+        print('Current state matrix:')
         for elem in self.__matrix:
             print('     ', elem)
-        print('Punkty:')
-        print('     Gracz: ' + self.__points[0])
+        print('Points:')
+        print('     Player: ' + self.__points[0])
         print('     AI: ' + self.__points[1])
-        print('Stan:')
+        print('Available states:')
         print(jsbeautifier.beautify(json.dumps(self.__q_table), jsbeautifier.default_options()))
 
 
