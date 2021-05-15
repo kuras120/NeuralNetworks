@@ -13,9 +13,9 @@ class Process:
         self.__reset_on_new = reset_on_new
         self.__learning_mode = learning_mode
         self.__hash = ''.join(sys.argv[2:-2])
-        self.init(sys.argv[2:-2], state_file_path.replace('\\', '/'))
+        self.__init(sys.argv[2:-2], state_file_path.replace('\\', '/'))
 
-    def init(self, matrix, state_file_path):
+    def __init(self, matrix, state_file_path):
         init_state = True
         for i in range(0, len(matrix), self.__length):
             sub_list = matrix[i:i + self.__length]
@@ -31,7 +31,7 @@ class Process:
                     self.__q_table[self.__hash][i].append(0)
             with open(absolute_path, 'w') as state:
                 json.dump(self.__q_table, state)
-            print('State saved in ' + absolute_path)
+            print('State saved in ' + absolute_path, file=sys.stderr)
         else:
             with open(absolute_path, 'r') as state:
                 self.__q_table = json.load(state)
@@ -40,14 +40,14 @@ class Process:
         pass
 
     def values(self):
-        print('Current state matrix:')
+        print('Current state matrix:', file=sys.stderr)
         for elem in self.__matrix:
-            print('     ', elem)
-        print('Points:')
-        print('     Player: ' + self.__points[0])
-        print('     AI: ' + self.__points[1])
-        print('Available states:')
-        print(jsbeautifier.beautify(json.dumps(self.__q_table), jsbeautifier.default_options()))
+            print('     ', elem, file=sys.stderr)
+        print('Points:', file=sys.stderr)
+        print('     Player: ' + self.__points[0], file=sys.stderr)
+        print('     AI: ' + self.__points[1], file=sys.stderr)
+        print('Available states:', file=sys.stderr)
+        print(jsbeautifier.beautify(json.dumps(self.__q_table), jsbeautifier.default_options()), file=sys.stderr)
 
 
 if __name__ == '__main__':
