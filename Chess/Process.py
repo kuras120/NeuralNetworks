@@ -13,9 +13,9 @@ class Process:
         self.__reset_on_new = reset_on_new
         self.__learning_mode = learning_mode
         self.__hash = ''.join(sys.argv[2:-2])
-        self.init(sys.argv[2:-2], state_file_path.replace('\\', '/'))
+        self.__init(sys.argv[2:-2], state_file_path.replace('\\', '/'))
 
-    def init(self, matrix, state_file_path):
+    def __init(self, matrix, state_file_path):
         init_state = True
         for i in range(0, len(matrix), self.__length):
             sub_list = matrix[i:i + self.__length]
