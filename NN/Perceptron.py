@@ -27,6 +27,9 @@ class Perceptron:
     def sigmoid_function(self, result_number):
         return (result_number - 1) / (1 + np.power(np.e, -self.sum()))
 
+    def relu_function(self):
+        return 0 if self.sum() <= 0 else self.sum()
+
     def correction(self, output, learning_constant):
         for i in range(len(self.data_input)):
             self.weights[i] += learning_constant * (self.classification - output) * self.data_input[i]

@@ -16,7 +16,10 @@ class NnCore:
                 output_data = []
                 for neuron in layer:
                     neuron.set_data(local_data, labels[i])
-                    result = neuron.sigmoid_function(result_number)
+                    if neuron == neuron_map[-1][-1]:
+                        result = neuron.sigmoid_function(result_number)
+                    else:
+                        result = neuron.relu_function()
                     output_data.append(result)
                     if round(result) != float(labels[i]):
                         error_rate += 1
