@@ -3,10 +3,13 @@ import random
 
 
 class Perceptron:
-    def __init__(self, data_length, bias):
+    def __init__(self, data_length, bias, weights=None):
         self.weights = []
-        for _ in range(data_length + 1):
-            self.weights.append(random.uniform(-1, 1))
+        if weights:
+            self.weights = weights
+        else:
+            for _ in range(data_length + 1):
+                self.weights.append(random.uniform(-1, 1))
         self.bias = bias
         self.data_input = None
         self.classification = None
