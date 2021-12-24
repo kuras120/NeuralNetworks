@@ -53,10 +53,10 @@ class TestRunner:
                     std_devs[2] = std_test_dev
                     if sum(rates) < sum(best_rates):
                         best_errors[0] = errors[0]
-                        best_errors[2] = errors[2]
+                        best_errors[1] = errors[2]
                         best_rates = rates
                         best_std_devs[0] = std_devs[0]
-                        best_std_devs[2] = std_devs[2]
+                        best_std_devs[1] = std_devs[2]
                         neuron_best_state = copy.deepcopy(neuron_learn_state)
 
         print('\n# ******************************* SEED: ' + str(r_seed) + ' ******************************* #')
