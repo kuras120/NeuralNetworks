@@ -1,7 +1,7 @@
 import os
 import json
 
-from .Generator import Generator
+from .generator import Generator
 
 
 class DefaultPredictor:

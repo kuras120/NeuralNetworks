@@ -3,7 +3,7 @@ import sys
 import json
 import jsbeautifier
 
-from Helper.DefaultPredictor import DefaultPredictor
+from helper.default_predictor import DefaultPredictor
 
 
 class Process:
@@ -55,6 +55,6 @@ class Process:
 
 
 if __name__ == '__main__':
-    process = Process('Data/state.json', True, True)
+    process = Process('data/state.json', True, True)
     process.values()
     process.move()

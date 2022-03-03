@@ -1,5 +1,5 @@
 import numpy as np
-from NN.Perceptron import Perceptron
+from nn.perceptron import Perceptron
 
 
 class NnCore:

@@ -1,7 +1,7 @@
 import copy
 import time
-from NN.NnCore import NnCore
-from KNN.DataPreparation import DataPreparation
+from nn.nn_core import NnCore
+from knn.data_preparation import DataPreparation
 
 
 if __name__ == '__main__':
