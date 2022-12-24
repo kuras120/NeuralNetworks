@@ -18,7 +18,6 @@ class Process:
         self.__hash = ''.join(sys.argv[3:3 + (self.__length * self.__length)])
         self.__prev_hash = ''.join(sys.argv[3 + (self.__length * self.__length):-4])
         self.__predictor = DefaultPredictor(self.__char, self.__length, state_file_path)
-        print(state_file_path)
         self.__init(sys.argv[3:3 + (self.__length * self.__length)], state_file_path, reset)
 
     def __init(self, matrix, state_file_path, reset):
@@ -55,6 +54,6 @@ class Process:
 
 
 if __name__ == '__main__':
-    process = Process('data/state.json', True, True)
+    process = Process(os.path.join('data', 'state.json'), True, True)
     process.values()
     process.move()
