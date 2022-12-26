@@ -2,7 +2,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from itertools import chain
 from collections import Counter
-from scratch.line_separation import Perceptron
+from line_separation import Perceptron
 
 
 class1 = [(3, 4), (4.2, 5.3), (4, 3), (6, 5), (4, 6), (3.7, 5.8),

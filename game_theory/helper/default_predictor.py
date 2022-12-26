@@ -1,21 +1,21 @@
-import os
 import json
 
-from .generator import Generator
+from helper.generator import Generator
+from resources.resource import Resource
 
 
 class DefaultPredictor:
-    def __init__(self, char, length, state_file_path, learning_rate=0.1, discount_rate=0.5):
+    def __init__(self, char, length, state_file_name, learning_rate=0.1, discount_rate=0.5):
         self.__char = char
         self.__length = length
         self.__learning_rate = learning_rate
         self.__discount_rate = discount_rate
-        self.__absolute_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), state_file_path)
+        self.__state_file_name = state_file_name
 
     def evaluate(self, previous_state, current_state):
         next_states = self.__generate_neighbour_states(previous_state)
         q_table: dict = {}
-        with open(self.__absolute_path, 'r') as state_file:
+        with Resource.load(self.__state_file_name, 'r') as state_file:
             q_table = json.load(state_file)
             for state in next_states:
                 if state not in q_table.keys():
