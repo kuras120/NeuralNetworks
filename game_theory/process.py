@@ -3,40 +3,43 @@ import sys
 import json
 import jsbeautifier
 
+from helper.default_predictor import DefaultPredictor
+from resources.resource import Resource
+
 
 class Process:
-    def __init__(self, reset_on_new, learning_mode, state_file_path):
+    def __init__(self, state_file_name, learning_mode, reset):
+        self.__learning_mode = learning_mode
         self.__matrix = []
         self.__q_table = {}
-        self.__points = sys.argv[-2:]
-        self.__length = int(sys.argv[1])
-        self.__reset_on_new = reset_on_new
-        self.__learning_mode = learning_mode
-        self.__hash = ''.join(sys.argv[2:-2])
-        self.__init(sys.argv[2:-2], state_file_path.replace('\\', '/'))
+        self.__char = sys.argv[1]
+        self.__length = int(sys.argv[2])
+        self.__points = sys.argv[-4:-2]
+        self.__prev_points = sys.argv[-2:]
+        self.__hash = ''.join(sys.argv[3:3 + (self.__length * self.__length)])
+        self.__prev_hash = ''.join(sys.argv[3 + (self.__length * self.__length):-4])
+        self.__predictor = DefaultPredictor(self.__char, self.__length, state_file_name)
+        self.__init(sys.argv[3:3 + (self.__length * self.__length)], state_file_name, reset)
 
-    def __init(self, matrix, state_file_path):
-        init_state = True
+    def __init(self, matrix, state_file_name, reset):
         for i in range(0, len(matrix), self.__length):
             sub_list = matrix[i:i + self.__length]
             self.__matrix.append(sub_list)
-            if sub_list.count(sub_list[0]) != len(sub_list):
-                init_state = False
-        absolute_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), state_file_path)
-        if init_state and self.__reset_on_new:
+        if reset:
             self.__q_table[self.__hash] = []
             for i in range(len(self.__matrix)):
                 self.__q_table[self.__hash].append([])
                 for j in range(len(self.__matrix[i])):
                     self.__q_table[self.__hash][i].append(0)
-            with open(absolute_path, 'w') as state:
+            with Resource.load(state_file_name, 'w') as state:
                 json.dump(self.__q_table, state)
-            print('State saved in ' + absolute_path, file=sys.stderr)
+                Resource.log(state.name)
         else:
-            with open(absolute_path, 'r') as state:
+            with Resource.load(state_file_name, 'r') as state:
                 self.__q_table = json.load(state)
 
     def move(self):
+        self.__predictor.evaluate(self.__prev_hash, self.__hash)
         pass
 
     def values(self):
@@ -51,5 +54,6 @@ class Process:
 
 
 if __name__ == '__main__':
-    process = Process(True, True, 'Data/state.json')
+    process = Process('state.json', True, True)
     process.values()
+    process.move()

@@ -1,7 +1,7 @@
-from KNN.Chart import Chart
+from knn.chart import Chart
 from collections import Counter
-from KNN.KnnCore import KnnCore
-from KNN.DataPreparation import DataPreparation
+from knn.knn_core import KnnCore
+from knn.data_preparation import DataPreparation
 
 
 if __name__ == '__main__':
