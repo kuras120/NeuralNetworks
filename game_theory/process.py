@@ -1,4 +1,4 @@
-import os
+import math
 import sys
 import json
 import jsbeautifier
@@ -13,17 +13,20 @@ class Process:
         self.__matrix = []
         self.__q_table = {}
         self.__char = sys.argv[1]
-        self.__length = int(sys.argv[2])
-        self.__points = sys.argv[-4:-2]
-        self.__prev_points = sys.argv[-2:]
-        self.__hash = ''.join(sys.argv[3:3 + (self.__length * self.__length)])
-        self.__prev_hash = ''.join(sys.argv[3 + (self.__length * self.__length):-4])
-        self.__predictor = DefaultPredictor(self.__char, self.__length, state_file_name)
-        self.__init(sys.argv[3:3 + (self.__length * self.__length)], state_file_name, reset)
+        self.__points = sys.argv[2:4]
+        self.__prev_points = sys.argv[4:6]
+        if len(sys.argv[6:]) % 2 != 0 or math.sqrt(int(len(sys.argv[6:]) / 2)) % 2 != 0:
+            raise ArithmeticError()
+        self.__length = int(len(sys.argv[6:]) / 2)
+        self.__hash = ''.join(sys.argv[6:6 + self.__length])
+        self.__prev_hash = ''.join(sys.argv[6 + self.__length:])
+        self.__predictor = DefaultPredictor(self.__char, int(math.sqrt(self.__length)), state_file_name)
+        self.__init(sys.argv[6:6 + self.__length], state_file_name, reset)
 
     def __init(self, matrix, state_file_name, reset):
-        for i in range(0, len(matrix), self.__length):
-            sub_list = matrix[i:i + self.__length]
+        length = int(math.sqrt(self.__length))
+        for i in range(0, len(matrix), length):
+            sub_list = matrix[i:i + length]
             self.__matrix.append(sub_list)
         if reset:
             self.__q_table[self.__hash] = []
