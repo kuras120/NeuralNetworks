@@ -43,7 +43,6 @@ class Process:
 
     def move(self):
         self.__predictor.evaluate(self.__prev_hash, self.__hash)
-        pass
 
     def values(self):
         print('Current state matrix:', file=sys.stderr)
