@@ -32,17 +32,29 @@ jobs:
       - run:
           name: "Upload coverage report"
           command: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Python -r coverage.xml
+      - persist_to_workspace:
+          root: game_theory
+          paths: '*'
   publish:
     docker:
-      - image: cibuilds/github:0.10
+      - image: cibuilds/github:0.13
     steps:
       - attach_workspace:
           at: game_theory
       - run:
+          name: "Check current directory"
+          command: ls -la
+      - run:
+          name: "Install python"
+          command: apk add python3
+      - run:
           name: "Publish release"
           command: |
-            VERSION=$()
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} game_theory
+            VERSION=$(python3 game_theory/version_bump.py version)
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} game_theory
+      - run:
+          name: "Bump version"
+          command: python3 game_theory/version_bump.py bump
 
 
 # Invoke jobs via workflows
@@ -56,11 +68,16 @@ workflows:
               only:
                 - master
                 - circleci-test
+            tags:
+              only: /^\d+\.\d+\.\d+$/
       - publish:
           requires:
             - test
           filters:
             branches:
+#               ignore: /.*/
               only:
                 - master
                 - circleci-test
+            tags:
+              only: /^\d+\.\d+\.\d+$/
