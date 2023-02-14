@@ -53,6 +53,7 @@ jobs:
     docker:
       - image: cibuilds/github:0.13
     steps:
+      - checkout
       - attach_workspace:
           at: /build
       - run:
@@ -72,7 +73,7 @@ jobs:
             VERSION=$(python3 game_theory/version_bump.py version)
             git tag -a game_theory-${VERSION} -m "New tag with version ${VERSION}"
             git push https://${GITHUB_TOKEN}@github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git --tags
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} game_theory
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} /build
   version_bump:
     docker:
       - image: cimg/base:2023.02
