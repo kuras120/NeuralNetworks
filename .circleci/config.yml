@@ -18,9 +18,6 @@ jobs:
           name: "Check current directory"
           command: ls -la
       - run:
-          name: "Check python version"
-          command: python --version
-      - run:
           name: "Install dependencies"
           command: pip install -r requirements.txt
       - run:
@@ -32,15 +29,32 @@ jobs:
       - run:
           name: "Upload coverage report"
           command: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Python -r coverage.xml
+  build:
+    docker:
+      - image: cimg/python:3.11.1
+    steps:
+      - checkout
+      - run:
+          name: "Check current directory"
+          command: ls -la
+      - run:
+          name: "Install dependencies"
+          command: pip install -r requirements.txt
+      - run:
+          name: "Prepare build"
+          command: zip -r game_theory.zip game_theory
       - persist_to_workspace:
-          root: game_theory
-          paths: '*'
+          root: .
+          paths:
+            - game_theory.zip
+            - game_theory/release
+            - game_theory/version_bump.py
   publish:
     docker:
       - image: cibuilds/github:0.13
     steps:
       - attach_workspace:
-          at: game_theory
+          at: /build
       - run:
           name: "Check current directory"
           command: ls -la
@@ -48,13 +62,36 @@ jobs:
           name: "Install python"
           command: apk add python3
       - run:
+          name: "Git config"
+          command: |
+            git config user.email "ci@dude.com"
+            git config user.name "CIDude"
+      - run:
           name: "Publish release"
           command: |
             VERSION=$(python3 game_theory/version_bump.py version)
+            git tag -a game_theory-${VERSION} -m "New tag with version ${VERSION}"
+            git push https://${GITHUB_TOKEN}@github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git --tags
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} game_theory
+  version_bump:
+    docker:
+      - image: cimg/base:2023.02
+    steps:
+      - checkout
       - run:
           name: "Bump version"
           command: python3 game_theory/version_bump.py bump
+      - run:
+          name: "Git config"
+          command: |
+            git config user.email "ci@dude.com"
+            git config user.name "CIDude"
+      - run:
+          name: "Git commit & push"
+          command: |
+            VERSION=$(python3 game_theory/version_bump.py version)
+            git commit -a -m "[ci skip] version bump to ${VERSION}"
+            git push https://${GITHUB_TOKEN}@github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git
 
 
 # Invoke jobs via workflows
@@ -68,16 +105,27 @@ workflows:
               only:
                 - master
                 - circleci-test
-            tags:
-              only: /^\d+\.\d+\.\d+$/
-      - publish:
+      - build:
           requires:
             - test
           filters:
             branches:
-#               ignore: /.*/
               only:
                 - master
                 - circleci-test
-            tags:
-              only: /^\d+\.\d+\.\d+$/
+      - publish:
+          requires:
+            - build
+          filters:
+            branches:
+              only:
+                - master
+                - circleci-test
+      - version_bump:
+          requires:
+            - publish
+          filters:
+            branches:
+              only:
+                - master
+                - circleci-test
