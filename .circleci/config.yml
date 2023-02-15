@@ -96,7 +96,7 @@ workflows:
             branches:
               only:
                 - master
-                - circleci-test
+                - gt\/.*
       - build:
           requires:
             - test
@@ -104,7 +104,6 @@ workflows:
             branches:
               only:
                 - master
-                - circleci-test
       - publish:
           requires:
             - build
@@ -112,7 +111,6 @@ workflows:
             branches:
               only:
                 - master
-                - circleci-test
       - version_bump:
           requires:
             - publish
@@ -120,4 +118,3 @@ workflows:
             branches:
               only:
                 - master
-                - circleci-test
