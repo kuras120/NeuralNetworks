@@ -96,7 +96,7 @@ workflows:
             branches:
               only:
                 - master
-                - gt\/.*
+                - /gt\/.*/
       - build:
           requires:
             - test
