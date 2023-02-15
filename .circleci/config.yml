@@ -61,15 +61,10 @@ jobs:
           name: "Install python"
           command: apk add python3
       - run:
-          name: "Git config"
-          command: |
-            git config user.email "ci@dude.com"
-            git config user.name "CIDude"
-      - run:
           name: "Publish release"
           command: |
             VERSION=$(python3 game_theory/version_bump.py version)
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -n "New game_theory release ${VERSION}" ${VERSION} build
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} build
   version_bump:
     docker:
       - image: cimg/base:2023.02
