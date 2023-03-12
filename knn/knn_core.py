@@ -45,7 +45,6 @@ class KnnCore:
             for key in class_counter:
                 class_counter[key] /= total
                 class_counter[key] *= 100
-                class_counter[key] = round(class_counter[key], 2).__str__() + '%'
+                class_counter[key] = str(round(class_counter[key], 2)) + '%'
             return winner, class_counter.most_common()
-        else:
-            return winner, votes_for_winner / sum(votes)
+        return winner, votes_for_winner / sum(votes)

@@ -27,7 +27,7 @@ if __name__ == '__main__':
         if error < smallest_error:
             smallest_error = error
             neuron_state = copy.deepcopy(output_neuron)
-            print('Error: ', error, 'Error rate: ', error_rate.__str__() + '%')
+            print('Error: ', error, 'Error rate: ', str(error_rate) + '%')
             test_error, test_error_rate, test_output_neuron = nn.learn_and_test(neuron_map, test_data, test_labels, 3)
             test_result = [test_error_rate, error_rate]
             if sum(test_result) <= sum(smallest_sum_rates):

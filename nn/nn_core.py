@@ -35,7 +35,7 @@ class NnCore:
         length = self.input_length
         for layer in neuron_map:
             column = []
-            for i in range(layer):
+            for _ in range(layer):
                 column.append(Perceptron(length, 1.0))
             length = layer
             network.append(column)
