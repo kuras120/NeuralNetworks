@@ -22,12 +22,11 @@ if __name__ == '__main__':
     for i in range(data_preparation.n_training_samples):
         neighbours = KnnCore.get_neighbours(learnset_data, learnset_labels, testset_data[i], 8, KnnCore.distance)
         print('{: >1} {: >3} {: >1} {: >50} {: >1} {: >1} {: >1} {: >1} {: >1} {: >1}'.format(
-            'index: ', i, ', result of vote: ', str(KnnCore.vote_harmonic_weights(neighbours)), ', test label: ',
-            str(testset_labels[i]), ', test data: ', str(testset_data[i]), ', compatibility: ',
-            (KnnCore.vote(neighbours)[0] == str(testset_labels[i]))))
-
+            'index: ', i, ', result of vote: ', str(KnnCore.vote_harmonic_weights(neighbours)),
+            ', test label: ', str(testset_labels[i]), ', test data: ', str(testset_data[i]),
+            ', compatibility: ', (KnnCore.vote(neighbours)[0] == str(testset_labels[i]))
+        ))
         compatibility[KnnCore.vote(neighbours)[0] == testset_labels[i]] += 1
-
     compatibility_percentage = compatibility[True] / sum(compatibility.values())
     print('Compatibility percentage is: ', compatibility_percentage * 100, '%')
     chart = Chart()

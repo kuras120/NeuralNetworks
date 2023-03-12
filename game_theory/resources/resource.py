@@ -9,4 +9,8 @@ class Resource:
 
     @staticmethod
     def load(resource_name: str, file_mode: str):
-        return open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data', resource_name), file_mode)
+        return open(
+            file=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'data', resource_name),
+            mode=file_mode,
+            encoding='utf-8'
+        )

@@ -12,7 +12,7 @@ class DefaultPredictor:
         self.__state_file_name = state_file_name
 
     # (to_evaluate - previous, points - current)
-    def evaluate(self, to_evaluate, points):
+    def evaluate(self, to_evaluate):
         next_states = self.__generate_neighbour_states(to_evaluate['state'])
         with Resource.load(self.__qtable_file_name, 'r') as qtable_file:
             q_table: dict = json.load(qtable_file)

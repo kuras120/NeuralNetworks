@@ -75,7 +75,7 @@ for i in range(2):
     plt.scatter(X[i], Y[i], c=colours[i])
 XR = np.arange(-8, 4)
 m = -p.weights[0] / p.weights[1]
-b = -p.weights[-1]/p.weights[1]
+b = -p.weights[-1] / p.weights[1]
 print(m, b)
 plt.plot(XR, m*XR + b, label="decision boundary")
 plt.legend()
