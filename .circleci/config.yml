@@ -22,7 +22,7 @@ jobs:
           command: pip install -r requirements.txt
       - run:
           name: "Run unittests"
-          command: coverage run -m unittest discover game_theory
+          command: coverage run -m unittest discover games_theory
       - run:
           name: "Create coverage report"
           command: coverage xml
@@ -42,11 +42,11 @@ jobs:
           command: pip install -r requirements.txt
       - run:
           name: "Prepare build"
-          command: zip -r game_theory.zip game_theory
+          command: zip -r games_theory.zip games_theory
       - persist_to_workspace:
           root: .
           paths:
-            - game_theory.zip
+            - games_theory.zip
   publish:
     docker:
       - image: cibuilds/github:0.13
@@ -63,7 +63,7 @@ jobs:
       - run:
           name: "Publish release"
           command: |
-            VERSION=$(python3 game_theory/version_bump.py version)
+            VERSION=$(python3 games_theory/version_bump.py version)
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} ${VERSION} build
   version_bump:
     docker:
@@ -72,7 +72,7 @@ jobs:
       - checkout
       - run:
           name: "Bump version"
-          command: python3 game_theory/version_bump.py bump
+          command: python3 games_theory/version_bump.py bump
       - run:
           name: "Git config"
           command: |
@@ -81,7 +81,7 @@ jobs:
       - run:
           name: "Git commit & push"
           command: |
-            VERSION=$(python3 game_theory/version_bump.py version)
+            VERSION=$(python3 games_theory/version_bump.py version)
             git commit -a -m "[ci skip] version bump to ${VERSION}"
             git push https://${GITHUB_TOKEN}@github.com/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}.git
 
