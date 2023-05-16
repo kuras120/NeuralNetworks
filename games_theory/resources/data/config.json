@@ -1,0 +1,6 @@
+{
+  "learning": true,
+  "reset": true,
+  "board-size": 4,
+  "ai-char": "O"
+}

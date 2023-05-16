@@ -19,8 +19,7 @@ class Perceptron:
     def unit_step_function(x):
         if x < 0:
             return 0
-        else:
-            return 1
+        return 1
 
     def __call__(self, in_data):
         weighted_input = self.weights * in_data

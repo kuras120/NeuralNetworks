@@ -1,4 +1,6 @@
 numpy
+psutil
 matplotlib
-scikit-learn #sklearn
-tensorflow-gpu
+scikit-learn
+jsbeautifier
+coverage
