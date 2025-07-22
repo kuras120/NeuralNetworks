@@ -90,11 +90,16 @@ jobs:
         id: get_version
         run: echo "VERSION=$(python games_theory/version_bump.py version)" >> $GITHUB_ENV
       
+      - name: Generate Changelog
+        id: changelog
+        run: ./games_theory/generate_changelog.sh ${{ env.VERSION }}
+      
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           files: build/games_theory.zip
           tag_name: ${{ env.VERSION }}
+          body: ${{ env.CHANGELOG }}
 
   version_bump:
     needs: publish
@@ -124,4 +129,4 @@ jobs:
       - name: Git commit & push
         run: |
           git commit -a -m "[ci skip] version bump to ${{ env.VERSION }}"
-          git push https://${{ github.token }}@github.com/${{ github.repository_owner }}/${{ github.repository_name }}.git
+          git push https://${{ github.token }}@github.com/${{ github.repository }}.git
