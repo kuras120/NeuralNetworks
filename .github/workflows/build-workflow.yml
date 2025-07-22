@@ -12,24 +12,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11.1'
-      
+
       - name: Check current directory
         run: ls -la
-      
+
       - name: Install dependencies
         run: pip install -r requirements.txt
-      
+
       - name: Run unittests
         run: coverage run -m unittest discover games_theory
-      
+
       - name: Create coverage report
         run: coverage xml
-      
+
       - name: Upload coverage report
         if: success()
         env:
@@ -43,21 +43,21 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: '3.11.1'
-      
+
       - name: Check current directory
         run: ls -la
-      
+
       - name: Install dependencies
         run: pip install -r requirements.txt
-      
+
       - name: Prepare build
         run: zip -r games_theory.zip games_theory
-      
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
@@ -67,33 +67,33 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/master' && !contains(github.event.head_commit.message, 'version bump')
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: games_theory
           path: build
-      
+
       - name: Check current directory
         run: ls -la
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-      
+
       - name: Get version
         id: get_version
         run: echo "VERSION=$(python games_theory/version_bump.py version)" >> $GITHUB_ENV
-      
+
       - name: Generate Changelog
         id: changelog
         run: ./games_theory/generate_changelog.sh ${{ env.VERSION }}
-      
+
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
@@ -108,15 +108,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
-      
+
       - name: Bump version
         run: python games_theory/version_bump.py bump
-      
+
       - name: Git config
         run: |
           git config user.email "ci@dude.com"
@@ -125,8 +125,27 @@ jobs:
       - name: Get version
         id: get_version
         run: echo "VERSION=$(python games_theory/version_bump.py version)" >> $GITHUB_ENV
-      
-      - name: Git commit & push
+
+      - name: Create branch for version bump
         run: |
-          git commit -a -m "[ci skip] version bump to ${{ env.VERSION }}"
-          git push https://${{ github.token }}@github.com/${{ github.repository }}.git
+          BRANCH_NAME="version-bump-${{ env.VERSION }}"
+          git checkout -b $BRANCH_NAME
+
+          # Commit changes to the new branch
+          git add .
+          git commit -m "version bump to ${{ env.VERSION }}"
+          git push -u origin $BRANCH_NAME
+
+      - name: Create PR and enable auto-merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH_NAME="version-bump-${{ env.VERSION }}"
+          PR_URL=$(gh pr create --title "Version bump to ${{ env.VERSION }}" \
+                      --body "Automated version bump after release ${{ env.VERSION }}" \
+                      --base master \
+                      --head $BRANCH_NAME \
+                      --label "automated,version-bump" \
+                      --repo ${{ github.repository }} \
+                      --json url -q .url)
+          gh pr merge $BRANCH_NAME --auto --merge --repo ${{ github.repository }}
