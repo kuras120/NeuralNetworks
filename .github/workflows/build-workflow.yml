@@ -141,11 +141,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           BRANCH_NAME="version-bump-${{ env.VERSION }}"
-          PR_URL=$(gh pr create --title "Version bump to ${{ env.VERSION }}" \
+          gh pr create --title "Version bump to ${{ env.VERSION }}" \
                       --body "Automated version bump after release ${{ env.VERSION }}" \
                       --base master \
                       --head $BRANCH_NAME \
                       --label "automated,version-bump" \
-                      --repo ${{ github.repository }} \
-                      --json url -q .url)
+                      --repo ${{ github.repository }}
           gh pr merge $BRANCH_NAME --auto --merge --repo ${{ github.repository }}
