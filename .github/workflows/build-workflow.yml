@@ -67,7 +67,7 @@ jobs:
   publish:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master' && !contains(github.event.head_commit.message, 'version bump')
+    if: github.ref == 'refs/heads/master' && !contains(github.event.head_commit.message, 'artifact version bump to')
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -133,7 +133,7 @@ jobs:
 
           # Commit changes to the new branch
           git add .
-          git commit -m "version bump to ${{ env.VERSION }}"
+          git commit -m "artifact version bump to ${{ env.VERSION }}"
           git push -u origin $BRANCH_NAME
 
       - name: Create PR and enable auto-merge
@@ -141,10 +141,10 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           BRANCH_NAME="version-bump-${{ env.VERSION }}"
-          gh pr create --title "Version bump to ${{ env.VERSION }}" \
-                      --body "Automated version bump after release ${{ env.VERSION }}" \
+          gh pr create --title "Artifact version bump to ${{ env.VERSION }}" \
+                      --body "Automated artifact version bump after release ${{ env.VERSION }}" \
                       --base master \
                       --head $BRANCH_NAME \
-                      --label "version-bump" \
+                      --label "automated,version-bump" \
                       --repo ${{ github.repository }}
           gh pr merge $BRANCH_NAME --auto --merge --repo ${{ github.repository }}
