@@ -145,6 +145,6 @@ jobs:
                       --body "Automated version bump after release ${{ env.VERSION }}" \
                       --base master \
                       --head $BRANCH_NAME \
-                      --label "automated,version-bump" \
+                      --label "version-bump" \
                       --repo ${{ github.repository }}
           gh pr merge $BRANCH_NAME --auto --merge --repo ${{ github.repository }}
