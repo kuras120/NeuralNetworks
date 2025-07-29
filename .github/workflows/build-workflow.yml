@@ -125,10 +125,23 @@ jobs:
         id: get_version
         run: echo "VERSION=$(python games_theory/version_bump.py version)" >> $GITHUB_ENV
 
-      - name: Push version bump directly to master
-        env:
-          GITHUB_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+      - name: Create branch for version bump
         run: |
+          BRANCH_NAME="version-bump-${{ env.VERSION }}"
+          git checkout -b $BRANCH_NAME
           git add .
           git commit -m "artifact version bump to ${{ env.VERSION }}"          
-          git push https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git HEAD:master
+          git push -u origin $BRANCH_NAME
+
+      - name: Create PR and enable auto-merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          BRANCH_NAME="version-bump-${{ env.VERSION }}"
+          gh pr create --title "Artifact version bump to ${{ env.VERSION }}" \
+                      --body "Automated artifact version bump after release ${{ env.VERSION }}" \
+                      --base master \
+                      --head $BRANCH_NAME \
+                      --label "automated,version-bump" \
+                      --repo ${{ github.repository }}
+          gh pr merge $BRANCH_NAME --auto --merge --repo ${{ github.repository }}
