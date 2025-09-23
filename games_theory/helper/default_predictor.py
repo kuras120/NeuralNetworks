@@ -32,8 +32,8 @@ class DefaultPredictor:
     def __generate_neighbour_states(key: str):
         neighbours = []
         for i in range(len(key)):
-            copy = ''.join(key)
+            copy = list(key)
             if key[i] == 'N':
-                list(copy)[i] = 'O'
-                neighbours.append(copy)
+                copy[i] = 'O'
+                neighbours.append(''.join(copy))
         return neighbours
