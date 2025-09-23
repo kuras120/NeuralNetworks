@@ -2,8 +2,8 @@ import sys
 import json
 import jsbeautifier
 
-from helper.default_predictor import DefaultPredictor
-from resources.resource import Resource
+from games_theory.helper.default_predictor import DefaultPredictor
+from games_theory.resources.resource import Resource
 
 
 class Process:

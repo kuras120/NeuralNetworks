@@ -1,7 +1,7 @@
 import json
 
-from .generator import Generator
-from ..resources.resource import Resource
+from games_theory.helper.generator import Generator
+from games_theory.resources.resource import Resource
 
 
 class DefaultPredictor:
