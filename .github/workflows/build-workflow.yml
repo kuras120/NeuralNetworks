@@ -14,7 +14,7 @@ jobs:
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11.1'
+          python-version: '3.11'
 
       - name: Check current directory
         run: ls -la
@@ -38,6 +38,8 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
+    outputs:
+      VERSION: ${{ steps.get_version.outputs.VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -45,57 +47,66 @@ jobs:
       - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11.1'
+          python-version: '3.11'
 
       - name: Check current directory
         run: ls -la
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build
 
-      - name: Prepare build
-        run: zip -r games_theory.zip games_theory
+      - name: Bump version for build
+        run: python games_theory/version_bump.py bump
 
-      - name: Upload artifact
+      - name: Get version
+        id: get_version
+        run: echo "VERSION=$(python games_theory/version_bump.py version)" >> $GITHUB_OUTPUT
+
+      - name: Build distribution (wheel and sdist)
+        run: python -m build
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: games_theory
-          path: games_theory.zip
+          name: dist
+          path: dist/*
 
   publish:
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
+    env:
+      VERSION: ${{ needs.build.outputs.VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: games_theory
-          path: build
-
-      - name: Check current directory
-        run: ls -la
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.x'
 
-      - name: Get version
-        id: get_version
-        run: echo "VERSION=$(python games_theory/version_bump.py version)" >> $GITHUB_ENV
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: build/dist
+
+      - name: Check current directory
+        run: ls -la && ls -la build/dist
 
       - name: Generate Changelog
         id: changelog
-        run: ./games_theory/generate_changelog.sh ${{ env.VERSION }}
+        run: ./games_theory/generate_changelog.sh $VERSION
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: build/games_theory.zip
+          files: |
+            build/dist/*.whl
+            build/dist/*.tar.gz
           tag_name: ${{ env.VERSION }}
           body: ${{ env.CHANGELOG }}
 
@@ -103,6 +114,8 @@ jobs:
     needs: publish
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
+    env:
+      VERSION: ${{ needs.build.outputs.VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -120,27 +133,23 @@ jobs:
           git config user.email "ci@dude.com"
           git config user.name "CIDude"
 
-      - name: Get version
-        id: get_version
-        run: echo "VERSION=$(python games_theory/version_bump.py version)" >> $GITHUB_ENV
-
       - name: Create branch for version bump
         run: |
-          BRANCH_NAME="version-bump-${{ env.VERSION }}"
-          git checkout -b $BRANCH_NAME
-          git add .
-          git commit -m "artifact version bump to ${{ env.VERSION }}"          
-          git push -u origin $BRANCH_NAME
+          BRANCH_NAME="version-bump-${VERSION}"
+          git checkout -b "$BRANCH_NAME"
+          git add pyproject.toml
+          git commit -m "artifact version bump to ${VERSION}"
+          git push -u origin "$BRANCH_NAME"
 
       - name: Create PR and enable auto-merge
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          BRANCH_NAME="version-bump-${{ env.VERSION }}"
-          gh pr create --title "Artifact version bump to ${{ env.VERSION }}" \
-                      --body "Automated artifact version bump after release ${{ env.VERSION }}" \
-                      --base master \
-                      --head $BRANCH_NAME \
-                      --label "automated,version-bump" \
-                      --repo ${{ github.repository }}
-          gh pr merge $BRANCH_NAME --auto --merge --repo ${{ github.repository }}
+          BRANCH_NAME="version-bump-${VERSION}"
+          gh pr create --title "Artifact version bump to ${VERSION}" \
+                       --body "Automated artifact version bump after release ${VERSION}" \
+                       --base master \
+                       --head "$BRANCH_NAME" \
+                       --label "automated,version-bump" \
+                       --repo ${{ github.repository }}
+          gh pr merge "$BRANCH_NAME" --auto --merge --repo ${{ github.repository }}

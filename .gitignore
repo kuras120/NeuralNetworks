@@ -4,3 +4,7 @@
 
 #COMPILED SOURCE
 *.pyc
+
+#flit build
+dist
+data

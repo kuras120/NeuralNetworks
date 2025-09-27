@@ -1,0 +1,19 @@
+[build-system]
+requires = ["flit_core>=3.9"]
+build-backend = "flit_core.buildapi"
+
+[project]
+name = "games-theory"
+dynamic = ["version"]
+description = "Q-learning backend for games"
+requires-python = ">=3.9"
+dependencies = [
+    "jsbeautifier>=1.14.0",
+]
+
+[project.scripts]
+games-theory = "games_theory.process:cli_main"
+games-theory-init = "games_theory.resources.resource:cli_copy_defaults"
+
+[tool.flit.module]
+name = "games_theory"

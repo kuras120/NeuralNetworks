@@ -13,7 +13,7 @@ class DefaultPredictor:
 
     # (to_evaluate - previous, points - current)
     def evaluate(self, to_evaluate, points):
-        next_states = self.__generate_neighbour_states(to_evaluate['state'])
+        next_states = self.generate_neighbour_states(to_evaluate['state'])
         with Resource.load(self.__qtable_file_name, 'r') as qtable_file:
             q_table: dict = json.load(qtable_file)
         for state in next_states:
@@ -29,7 +29,7 @@ class DefaultPredictor:
         pass
 
     @staticmethod
-    def __generate_neighbour_states(key: str):
+    def generate_neighbour_states(key: str):
         neighbours = []
         for i in range(len(key)):
             copy = list(key)

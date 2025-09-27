@@ -1,5 +1,8 @@
 # Changelog
 
+## What's Changed in 0.0.2
+* New build system for games_theory library
+
 ## What's Changed in 0.0.1
 * Model for qlearning
 * Internal states

@@ -7,7 +7,10 @@ from games_theory.resources.resource import Resource
 
 
 class Process:
-    def __init__(self, qtable_file_name='qtable.json', state_file_name='state.json', config_file_name='config.json'):
+    def __init__(self, player_points, ai_points, cells,
+                 qtable_file_name='qtable.json',
+                 state_file_name='state.json',
+                 config_file_name='config.json'):
         self.__matrix = []
         self.__q_table = {}
         self.__to_evaluate = None
@@ -17,16 +20,16 @@ class Process:
             length = conf['board-size']
             learning = conf['learning']
             reset = conf['reset']
-        # <table length> + <number arguments> + 1 sys.argv[0]
-        if len(sys.argv) != length * length + 3:
-            print("Wrong number of arguments. Check config or input parameters.", file=sys.stderr)
-            raise SystemError()
-        self.__points = sys.argv[1:3]
-        self.__hash = ''.join(sys.argv[3:3 + (length * length)])
-        self.__predictor = DefaultPredictor(qtable_file_name, state_file_name)
-        self.__init(sys.argv[3:3 + (length * length)], length, qtable_file_name, state_file_name, learning, reset)
 
-    def __init(self, matrix, length, qtable_file_name, state_file_name, learning, reset):
+        self.__points = [str(player_points), str(ai_points)]
+        flat_cells = list(cells)
+        self.__hash = ''.join(flat_cells)
+        init_cells = flat_cells
+
+        self.__predictor = DefaultPredictor(qtable_file_name, state_file_name)
+        self._initialize(init_cells, length, qtable_file_name, state_file_name, learning, reset)
+
+    def _initialize(self, matrix, length, qtable_file_name, state_file_name, learning, reset):
         for i in range(0, len(matrix), length):
             sub_list = matrix[i:i + length]
             self.__matrix.append(sub_list)
@@ -66,8 +69,47 @@ class Process:
         print('Available states:', file=sys.stderr)
         print(jsbeautifier.beautify(json.dumps(self.__q_table), jsbeautifier.default_options()), file=sys.stderr)
 
+def cli_main():
+    """
+    CLI entry point for games-theory.
 
-if __name__ == '__main__':
-    process = Process()
+    Usage:
+      games-theory <player_points> <ai_points> <cells...>
+
+    Details:
+      - Board cells count must equal board-size * board-size from config.json.
+      - Cells should be provided in row-major order.
+      - Example for 3x3: games-theory 0 0 N N N N N N N N N
+    """
+    import argparse
+
+    parser = argparse.ArgumentParser(
+        prog="games-theory",
+        description="Run Q-learning process on a board state."
+    )
+    parser.add_argument("player_points", help="Player points value")
+    parser.add_argument("ai_points", help="AI points value")
+    parser.add_argument(
+        "cells",
+        nargs="+",
+        help="Flattened board cells (row-major). Must match board-size*board-size from config.json"
+    )
+    args = parser.parse_args()
+
+    # Load board size from config to validate cell count
+    with Resource.load('config.json', 'r') as cfg:
+        conf = json.load(cfg)
+        length = conf['board-size']
+
+    expected_cells = length * length
+    if len(args.cells) != expected_cells:
+        print(
+            f"Wrong number of board cells: expected {expected_cells}, got {len(args.cells)}. "
+            f"Check your config or input parameters.",
+            file=sys.stderr
+        )
+        sys.exit(2)
+
+    process = Process(player_points=args.player_points, ai_points=args.ai_points, cells=args.cells)
     process.values()
     process.move()
