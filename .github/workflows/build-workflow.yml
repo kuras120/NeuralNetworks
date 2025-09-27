@@ -99,7 +99,7 @@ jobs:
 
       - name: Generate Changelog
         id: changelog
-        run: ./games_theory/generate_changelog.sh $VERSION
+        run: ./games_theory/generate_changelog.sh ${{ env.VERSION }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -135,19 +135,19 @@ jobs:
 
       - name: Create branch for version bump
         run: |
-          BRANCH_NAME="version-bump-${VERSION}"
+          BRANCH_NAME="version-bump-${{ env.VERSION }}"
           git checkout -b "$BRANCH_NAME"
           git add pyproject.toml
-          git commit -m "artifact version bump to ${VERSION}"
+          git commit -m "artifact version bump to ${{ env.VERSION }}"
           git push -u origin "$BRANCH_NAME"
 
       - name: Create PR and enable auto-merge
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          BRANCH_NAME="version-bump-${VERSION}"
-          gh pr create --title "Artifact version bump to ${VERSION}" \
-                       --body "Automated artifact version bump after release ${VERSION}" \
+          BRANCH_NAME="version-bump-${{ env.VERSION }}"
+          gh pr create --title "Artifact version bump to ${{ env.VERSION }}" \
+                       --body "Automated artifact version bump after release ${{ env.VERSION }}" \
                        --base master \
                        --head "$BRANCH_NAME" \
                        --label "automated,version-bump" \
