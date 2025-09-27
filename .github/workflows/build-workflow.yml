@@ -74,7 +74,7 @@ jobs:
           path: dist/*
 
   publish:
-    needs: build
+    needs: [test, build]
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
     env:
@@ -111,7 +111,7 @@ jobs:
           body: ${{ env.CHANGELOG }}
 
   version_bump:
-    needs: publish
+    needs: [test, build, publish]
     runs-on: ubuntu-latest
     if: github.event_name == 'workflow_dispatch'
     env:
@@ -137,7 +137,7 @@ jobs:
         run: |
           BRANCH_NAME="version-bump-${{ env.VERSION }}"
           git checkout -b "$BRANCH_NAME"
-          git add pyproject.toml
+          git add .
           git commit -m "artifact version bump to ${{ env.VERSION }}"
           git push -u origin "$BRANCH_NAME"
 
