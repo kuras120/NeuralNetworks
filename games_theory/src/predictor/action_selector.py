@@ -1,11 +1,18 @@
 import random
+from typing import List, Mapping, Optional, Sequence
+
+from games_theory.src.domain_types import State
 
 
 class ActionSelector:
-    def __init__(self, rng=None):
+    def __init__(self, rng: Optional[random.Random] = None) -> None:
         self._random = rng or random.Random()
 
-    def choose(self, neighbours, scored_states):
+    def choose(
+        self,
+        neighbours: Sequence[State],
+        scored_states: Mapping[State, float],
+    ) -> Optional[State]:
         if not neighbours:
             return None
 
@@ -16,7 +23,7 @@ class ActionSelector:
         return self._random.choices(neighbours, weights=weights, k=1)[0]
 
     @staticmethod
-    def _weights_from_values(values):
+    def _weights_from_values(values: Sequence[float]) -> Optional[List[float]]:
         if not values:
             return None
 
@@ -27,4 +34,4 @@ class ActionSelector:
         if min_value <= 0:
             shift = abs(min_value) + 1
             return [value + shift for value in values]
-        return values
+        return list(values)

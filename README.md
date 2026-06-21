@@ -59,9 +59,10 @@ For review expectations see `AGENTS.md`; this README focuses on how to navigate 
     - Copies packaged defaults into `<path>/data/`, writes `resource_path`, optionally regenerates derived files.
   - `games-theory <player_points> <ai_points> <cells...> [--config DIR]`
     - Validates board length, loads config/resources, prints the state, and triggers the predictor loop.
-- **Resource helpers (`games_theory/resources/resource.py`):** `Resource.load/save`, `copy_defaults`, and `generate_internal_files`.
+- **Resource helpers (`games_theory/resources/resource.py`):** `Resource.load/save`, `copy_defaults`, `generate_qtable_file`, and `generate_state_file`.
 - **Predictor pipeline (`games_theory/src/`):**
   - `default_predictor.py` orchestrates evaluation + action selection.
+  - `domain_types.py` defines shared state, points, pending-move, configuration, and Q-table contracts.
   - `predictor/state_encoder.py` maps external `X/O/N` boards into bot-relative canonical states.
   - `generator.py` enumerates bot moves for canonical board states.
   - Tests cover persistence (`test/resources`) and source behavior (`test/src`).

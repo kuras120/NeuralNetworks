@@ -1,3 +1,7 @@
+import random
+from typing import Optional
+
+from games_theory.src.domain_types import LastMove, Points, State, StatePayload
 from games_theory.src.predictor import (
     ActionSelector,
     QTableRepository,
@@ -6,14 +10,15 @@ from games_theory.src.predictor import (
     RewardPolicy,
 )
 
+
 class DefaultPredictor:
     def __init__(
         self,
-        resources_path,
-        learning_rate=0.1,
-        discount_rate=0.5,
-        rng=None
-    ):
+        resources_path: str,
+        learning_rate: float = 0.1,
+        discount_rate: float = 0.5,
+        rng: Optional[random.Random] = None,
+    ) -> None:
         self.resources_path = resources_path
         self.__learning_rate = learning_rate
         self.__discount_rate = discount_rate
@@ -21,11 +26,16 @@ class DefaultPredictor:
         self._state_storage = StateStorage(resources_path)
         self._action_selector = ActionSelector(rng)
 
-    def evaluate(self, to_evaluate, current_points, current_state):
+    def evaluate(
+        self,
+        to_evaluate: Optional[StatePayload],
+        current_points: Points,
+        current_state: State,
+    ) -> None:
         if not to_evaluate:
             return
 
-        last_move = to_evaluate.get('last_move') if isinstance(to_evaluate, dict) else None
+        last_move = to_evaluate.get('last_move')
         if not last_move:
             return
 
@@ -55,7 +65,7 @@ class DefaultPredictor:
         self._qtable_repository.save(q_table)
         self._state_storage.clear_last_move()
 
-    def predict(self, current_state, current_points):
+    def predict(self, current_state: State, current_points: Points) -> Optional[State]:
         q_table = self._qtable_repository.load()
         neighbours = self._qtable_repository.ensure_state_entry(q_table, current_state)
 
@@ -66,8 +76,10 @@ class DefaultPredictor:
 
         scored_states = q_table[current_state]
         chosen_state = self._action_selector.choose(neighbours, scored_states)
+        if chosen_state is None:
+            return None
 
-        last_move = {
+        last_move: LastMove = {
             'from': current_state,
             'to': chosen_state,
             'points': ScoreTracker.normalize(current_points),

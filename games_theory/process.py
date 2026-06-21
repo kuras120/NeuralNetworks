@@ -1,32 +1,44 @@
 import sys
 import json
+from typing import List, Sequence, cast
+
 import jsbeautifier
 
 from games_theory.src.default_predictor import DefaultPredictor
+from games_theory.src.domain_types import GameConfig, PointValue, StatePayload
 from games_theory.src.predictor import StateEncoder, QTableRepository
 from games_theory.resources.resource import Resource
 
 
 class Process:
-    def __init__(self, player_points, ai_points, cells, resources_path, length, learning, ai_char):
+    def __init__(
+        self,
+        player_points: PointValue,
+        ai_points: PointValue,
+        cells: Sequence[str],
+        resources_path: str,
+        length: int,
+        learning: bool,
+        ai_char: str,
+    ) -> None:
         self.resources_path = resources_path
 
-        self.__current_points = [str(player_points), str(ai_points)]
-        self.__cells = list(cells)
+        self.__current_points: List[str] = [str(player_points), str(ai_points)]
+        self.__cells: List[str] = list(cells)
         self.__length = length
         self.__learning = learning
         self.__hash = StateEncoder(ai_char=ai_char).encode_cells(self.__cells)
         self.__predictor = DefaultPredictor(resources_path)
         self.__qtable_repository = QTableRepository(resources_path)
 
-    def move(self):
+    def move(self) -> None:
         if self.__learning:
             with Resource.load('state.json', 'r', self.resources_path) as state:
-                to_evaluate = json.load(state)
+                to_evaluate = cast(StatePayload, json.load(state))
             self.__predictor.evaluate(to_evaluate, self.__current_points, self.__hash)
         self.__predictor.predict(self.__hash, self.__current_points)
 
-    def print_values(self):
+    def print_values(self) -> None:
         print('Current state matrix:', file=sys.stderr)
         for i in range(0, len(self.__cells), self.__length):
             print('     ', self.__cells[i:i + self.__length], file=sys.stderr)
@@ -38,7 +50,8 @@ class Process:
         q_table = self.__qtable_repository.load()
         print(jsbeautifier.beautify(json.dumps(q_table), jsbeautifier.default_options()), file=sys.stderr)
 
-def cli_main():
+
+def cli_main() -> None:
     """
     CLI entry point for games-theory.
 
@@ -67,7 +80,7 @@ def cli_main():
     args = parser.parse_args()
 
     with Resource.load('config.json', 'r', args.config) as cfg:
-        conf = json.load(cfg)
+        conf = cast(GameConfig, json.load(cfg))
         length = conf['board-size']
 
     expected_cells = length * length

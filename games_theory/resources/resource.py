@@ -4,13 +4,14 @@ import sys
 from pathlib import Path
 import shutil
 from importlib import resources
-from typing import Any
+from typing import Dict, TextIO, cast
+
 
 class Resource:
-    DATA_DIR = 'data'
+    DATA_DIR: str = 'data'
 
     @staticmethod
-    def load(resource_name: str, file_mode: str, base_dir: str):
+    def load(resource_name: str, file_mode: str, base_dir: str) -> TextIO:
         base = Path(base_dir) / Resource.DATA_DIR
         needs_dir = any(ch in file_mode for ch in ('w', 'a', '+'))
         if needs_dir:
@@ -22,11 +23,11 @@ class Resource:
         )
 
     @staticmethod
-    def save(resource_name: str, key: str, value: Any, base_dir: str):
-        data = {}
+    def save(resource_name: str, key: str, value: object, base_dir: str) -> None:
+        data: Dict[str, object] = {}
         try:
             with Resource.load(resource_name, 'r', base_dir) as f:
-                data = json.load(f)
+                data = cast(Dict[str, object], json.load(f))
         except FileNotFoundError:
             pass
 
@@ -37,7 +38,11 @@ class Resource:
             print('Value saved in file - key={},value={},file={}'.format(key, value, f.name), file=sys.stderr)
 
     @staticmethod
-    def copy_defaults(source_package: str= "games_theory.resources", target_dir: str= ".", overwrite:bool=False):
+    def copy_defaults(
+        source_package: str = "games_theory.resources",
+        target_dir: str = ".",
+        overwrite: bool = False,
+    ) -> None:
         target_root = Path(target_dir)
         dest = target_root / Resource.DATA_DIR
         base = resources.files(source_package) / Resource.DATA_DIR
@@ -66,7 +71,7 @@ class Resource:
         print("Defaults copied to directory={}".format(dest.resolve()), file=sys.stderr)
 
     @staticmethod
-    def generate_qtable_file(resource_path: str=".", overwrite:bool=False):
+    def generate_qtable_file(resource_path: str = ".", overwrite: bool = False) -> None:
         qtable_path = Path(resource_path) / Resource.DATA_DIR / 'qtable.json'
         if qtable_path.exists() and not overwrite:
             return
@@ -76,7 +81,7 @@ class Resource:
             print("Q-table file generated at {}".format(qtable_path.resolve()), file=sys.stderr)
 
     @staticmethod
-    def generate_state_file(resource_path: str=".", overwrite:bool=False):
+    def generate_state_file(resource_path: str = ".", overwrite: bool = False) -> None:
         state_path = Path(resource_path) / Resource.DATA_DIR / 'state.json'
         if state_path.exists() and not overwrite:
             return
@@ -86,7 +91,7 @@ class Resource:
             print("State file generated at {}".format(state_path.resolve()), file=sys.stderr)
 
 
-def cli_copy_defaults():
+def cli_copy_defaults() -> None:
     """
     CLI init entry point for games-theory.
 
