@@ -43,6 +43,14 @@ class TestResourceCopyDefaults(unittest.TestCase):
                 dst = Path(tmpdir) / Resource.DATA_DIR / name
                 self.assertTrue(dst.exists(), f"{name} should be generated")
 
+            qtable_path = Path(tmpdir) / Resource.DATA_DIR / "qtable.json"
+            qtable = json.loads(qtable_path.read_text(encoding="utf-8"))
+            self.assertEqual({}, qtable)
+
+            state_path = Path(tmpdir) / Resource.DATA_DIR / "state.json"
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            self.assertEqual({"last_move": None}, state)
+
     def test_copy_defaults_no_overwrite_by_default(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             Resource.copy_defaults(target_dir=tmpdir)

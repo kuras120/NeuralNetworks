@@ -2,50 +2,41 @@ import sys
 import json
 import jsbeautifier
 
-from games_theory.helper.default_predictor import DefaultPredictor
+from games_theory.src.default_predictor import DefaultPredictor
+from games_theory.src.predictor import StateEncoder, QTableRepository
 from games_theory.resources.resource import Resource
 
 
 class Process:
-    def __init__(self, player_points, ai_points, cells, resources_path, config):
-        self.__matrix = []
-        self.__q_table = {}
-        self.__to_evaluate = None
+    def __init__(self, player_points, ai_points, cells, resources_path, length, learning, ai_char):
         self.resources_path = resources_path
-        char = config['ai-char']
-        length = config['board-size']
-        learning = config['learning']
 
-        self.__points = [str(player_points), str(ai_points)]
-        flat_cells = list(cells)
-        self.__hash = ''.join(flat_cells)
+        self.__current_points = [str(player_points), str(ai_points)]
+        self.__cells = list(cells)
+        self.__length = length
+        self.__learning = learning
+        self.__hash = StateEncoder(ai_char=ai_char).encode_cells(self.__cells)
         self.__predictor = DefaultPredictor(resources_path)
-        self._initialize(flat_cells, length, learning)
-
-    def _initialize(self, matrix, length, learning):
-        for i in range(0, len(matrix), length):
-            sub_list = matrix[i:i + length]
-            self.__matrix.append(sub_list)
-        with Resource.load('qtable.json', 'r', self.resources_path) as qtable:
-            self.__q_table = json.load(qtable)
-        if learning:
-            with Resource.load('state.json', 'r', self.resources_path) as state:
-                self.__to_evaluate = json.load(state)
+        self.__qtable_repository = QTableRepository(resources_path)
 
     def move(self):
-        if self.__to_evaluate:
-            self.__predictor.evaluate(self.__to_evaluate, self.__points)
-        self.__predictor.predict()
+        if self.__learning:
+            with Resource.load('state.json', 'r', self.resources_path) as state:
+                to_evaluate = json.load(state)
+            self.__predictor.evaluate(to_evaluate, self.__current_points, self.__hash)
+        self.__predictor.predict(self.__hash, self.__current_points)
 
-    def values(self):
+    def print_values(self):
         print('Current state matrix:', file=sys.stderr)
-        for elem in self.__matrix:
-            print('     ', elem, file=sys.stderr)
+        for i in range(0, len(self.__cells), self.__length):
+            print('     ', self.__cells[i:i + self.__length], file=sys.stderr)
         print('Points:', file=sys.stderr)
-        print('     Player: ' + self.__points[0], file=sys.stderr)
-        print('     AI: ' + self.__points[1], file=sys.stderr)
+        print('     Player: ' + self.__current_points[0], file=sys.stderr)
+        print('     AI: ' + self.__current_points[1], file=sys.stderr)
         print('Available states:', file=sys.stderr)
-        print(jsbeautifier.beautify(json.dumps(self.__q_table), jsbeautifier.default_options()), file=sys.stderr)
+
+        q_table = self.__qtable_repository.load()
+        print(jsbeautifier.beautify(json.dumps(q_table), jsbeautifier.default_options()), file=sys.stderr)
 
 def cli_main():
     """
@@ -92,7 +83,9 @@ def cli_main():
         ai_points=args.ai_points,
         cells=args.cells,
         resources_path=args.config,
-        config=conf,
+        length=length,
+        learning=conf['learning'],
+        ai_char=conf['ai-char'],
     )
-    process.values()
     process.move()
+    process.print_values()

@@ -4,7 +4,7 @@ import sys
 from pathlib import Path
 import shutil
 from importlib import resources
-
+from typing import Any
 
 class Resource:
     DATA_DIR = 'data'
@@ -22,7 +22,7 @@ class Resource:
         )
 
     @staticmethod
-    def save(resource_name: str, key: str, value: any, base_dir: str):
+    def save(resource_name: str, key: str, value: Any, base_dir: str):
         data = {}
         try:
             with Resource.load(resource_name, 'r', base_dir) as f:
@@ -60,22 +60,30 @@ class Resource:
             raise FileNotFoundError("config.json not found in resources")
 
         Resource.save('config.json', 'resource_path', str(target_root), str(target_root))
-        Resource.generate_internal_files(str(target_root))
+        Resource.generate_qtable_file(str(target_root), overwrite=overwrite)
+        Resource.generate_state_file(str(target_root), overwrite=overwrite)
 
         print("Defaults copied to directory={}".format(dest.resolve()), file=sys.stderr)
 
     @staticmethod
-    def generate_internal_files(resource_path: str="."):
-        with Resource.load('config.json', 'r', resource_path) as config_file:
-            config = json.load(config_file)
-            board_size = config['board-size']
-            state = ''.join(['N'] * (board_size * board_size))
+    def generate_qtable_file(resource_path: str=".", overwrite:bool=False):
+        qtable_path = Path(resource_path) / Resource.DATA_DIR / 'qtable.json'
+        if qtable_path.exists() and not overwrite:
+            return
 
-            q_table_weights = [[0] * board_size] * board_size
-            Resource.save('qtable.json', state, q_table_weights, resource_path)
+        with Resource.load('qtable.json', 'w', resource_path) as qtable_file:
+            json.dump({}, qtable_file)
+            print("Q-table file generated at {}".format(qtable_path.resolve()), file=sys.stderr)
 
-            Resource.save('state.json', 'state', state, resource_path)
-            Resource.save('state.json', 'points', ['0', '0'], resource_path)
+    @staticmethod
+    def generate_state_file(resource_path: str=".", overwrite:bool=False):
+        state_path = Path(resource_path) / Resource.DATA_DIR / 'state.json'
+        if state_path.exists() and not overwrite:
+            return
+
+        with Resource.load('state.json', 'w', resource_path) as state_file:
+            json.dump({'last_move': None}, state_file)
+            print("State file generated at {}".format(state_path.resolve()), file=sys.stderr)
 
 
 def cli_copy_defaults():
@@ -93,10 +101,6 @@ def cli_copy_defaults():
     )
     parser.add_argument("path", nargs="?", default=".", help="Destination directory (default: current directory)")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing files if present")
-    parser.add_argument("--generate-internals", action="store_true", help="Generate internal games_theory files (qtable.json, state.json) based on config.json in the target directory")
+    parser.add_argument("--generate-internals", action="store_true", help="Re-generate internal games_theory files (qtable.json, state.json) based on config.json in the target directory")
     args = parser.parse_args()
-
-    if args.generate_internals:
-        Resource.generate_internal_files(args.path)
-    else:
-        Resource.copy_defaults(target_dir=args.path, overwrite=args.overwrite)
+    Resource.copy_defaults(target_dir=args.path, overwrite=args.overwrite)
