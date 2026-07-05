@@ -62,8 +62,11 @@ For review expectations see `AGENTS.md`; this README focuses on how to navigate 
 - **Resource helpers (`games_theory/resources/resource.py`):** `Resource.load/save`, `copy_defaults`, `generate_qtable_file`, and `generate_state_file`.
 - **Predictor pipeline (`games_theory/src/`):**
   - `default_predictor.py` orchestrates evaluation + action selection.
+  - `config_repository.py` loads typed game configuration for the CLI/process boundary.
   - `domain_types.py` defines shared state, points, pending-move, configuration, and Q-table contracts.
   - `predictor/state_encoder.py` maps external `X/O/N` boards into bot-relative canonical states.
+  - `predictor/state_repository.py` owns `state.json` reads/writes for pending moves.
+  - `predictor/qtable_repository.py` owns `qtable.json` reads/writes and lazy neighbour registration.
   - `generator.py` enumerates bot moves for canonical board states.
   - Tests cover persistence (`test/resources`) and source behavior (`test/src`).
 
@@ -73,12 +76,12 @@ For review expectations see `AGENTS.md`; this README focuses on how to navigate 
   - `board-size`: board dimension (square).
   - `ai-char`: symbol used by the bot on the external board (`X` or `O`). CLI input still uses `X/O/N`, but runtime state is normalized relative to the bot: `-1 = bot`, `1 = opponent`, `0 = empty`.
 - Derived files:
-- `state.json`: stores only the pending `last_move` payload (`from`, `to`, `points`, `advantage`) captured from the bot turn and used for the deferred 1-step update after the opponent move.
+  - `state.json`: stores only the pending `last_move` payload (`from`, `to`, `points`, `advantage`) captured from the bot turn and used for the deferred 1-step update after the opponent move.
   - `qtable.json`: dictionary keyed by canonical board hashes, where every edge represents a bot move. `games-theory-init` resets the file to `{}`; entries are created lazily when a state is evaluated for the first time.
 
 ### 4.4 Runtime & Data Flow
-1. **Input validation** via `Process.cli_main`.
-2. **State bootstrap**: load matrices, Q-table, optional `state.json`, then normalize the incoming board into the canonical `-1/0/1` representation.
+1. **Input validation** via `Process.cli_main` using `ConfigRepository` for config loading.
+2. **State bootstrap**: normalize the incoming board into the canonical `-1/0/1` representation; persistent state is accessed through `StateRepository` and `QTableRepository`.
 3. **Reward previous move** (if recorded) using delta advantage and discounted best-future reward (implemented in `DefaultPredictor.evaluate`).
 4. **Enumerate neighbours** (`Generator.generate_neighbour_states`) and choose the next move with weighted randomness (`DefaultPredictor.predict`).
 5. **Persist** updated Q-table and state snapshot for subsequent invocations. (See `architecture/qlearning_algorithm.puml`.)

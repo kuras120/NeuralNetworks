@@ -1,17 +1,17 @@
 import json
 import os
-import sys
-from pathlib import Path
 import shutil
+import sys
 from importlib import resources
-from typing import Dict, TextIO, cast
+from pathlib import Path
+from typing import Dict, cast, IO
 
 
 class Resource:
     DATA_DIR: str = 'data'
 
     @staticmethod
-    def load(resource_name: str, file_mode: str, base_dir: str) -> TextIO:
+    def load(resource_name: str, file_mode: str, base_dir: str) -> IO:
         base = Path(base_dir) / Resource.DATA_DIR
         needs_dir = any(ch in file_mode for ch in ('w', 'a', '+'))
         if needs_dir:
@@ -35,7 +35,7 @@ class Resource:
 
         with Resource.load(resource_name, 'w', base_dir) as f:
             json.dump(data, f)
-            print('Value saved in file - key={},value={},file={}'.format(key, value, f.name), file=sys.stderr)
+            print('Value saved in file key={},value={},file={}'.format(key, value, f.name), file=sys.stderr)
 
     @staticmethod
     def copy_defaults(
@@ -78,7 +78,7 @@ class Resource:
 
         with Resource.load('qtable.json', 'w', resource_path) as qtable_file:
             json.dump({}, qtable_file)
-            print("Q-table file generated at {}".format(qtable_path.resolve()), file=sys.stderr)
+            print("Q-table file generated at path={}".format(qtable_path.resolve()), file=sys.stderr)
 
     @staticmethod
     def generate_state_file(resource_path: str = ".", overwrite: bool = False) -> None:
@@ -88,7 +88,7 @@ class Resource:
 
         with Resource.load('state.json', 'w', resource_path) as state_file:
             json.dump({'last_move': None}, state_file)
-            print("State file generated at {}".format(state_path.resolve()), file=sys.stderr)
+            print("State file generated at path={}".format(state_path.resolve()), file=sys.stderr)
 
 
 def cli_copy_defaults() -> None:

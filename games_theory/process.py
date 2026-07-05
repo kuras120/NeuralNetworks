@@ -1,13 +1,13 @@
 import sys
 import json
-from typing import List, Sequence, cast
+from typing import List, Sequence
 
 import jsbeautifier
 
+from games_theory.src.config_repository import ConfigRepository
 from games_theory.src.default_predictor import DefaultPredictor
-from games_theory.src.domain_types import GameConfig, PointValue, StatePayload
-from games_theory.src.predictor import StateEncoder, QTableRepository
-from games_theory.resources.resource import Resource
+from games_theory.src.domain_types import PointValue, QTable
+from games_theory.src.predictor import StateEncoder, QTableRepository, StateRepository
 
 
 class Process:
@@ -21,8 +21,6 @@ class Process:
         learning: bool,
         ai_char: str,
     ) -> None:
-        self.resources_path = resources_path
-
         self.__current_points: List[str] = [str(player_points), str(ai_points)]
         self.__cells: List[str] = list(cells)
         self.__length = length
@@ -30,25 +28,32 @@ class Process:
         self.__hash = StateEncoder(ai_char=ai_char).encode_cells(self.__cells)
         self.__predictor = DefaultPredictor(resources_path)
         self.__qtable_repository = QTableRepository(resources_path)
+        self.__state_repository = StateRepository(resources_path)
 
     def move(self) -> None:
         if self.__learning:
-            with Resource.load('state.json', 'r', self.resources_path) as state:
-                to_evaluate = cast(StatePayload, json.load(state))
-            self.__predictor.evaluate(to_evaluate, self.__current_points, self.__hash)
+            self.__predictor.evaluate(self.__state_repository.load(), self.__current_points, self.__hash)
         self.__predictor.predict(self.__hash, self.__current_points)
 
     def print_values(self) -> None:
-        print('Current state matrix:', file=sys.stderr)
-        for i in range(0, len(self.__cells), self.__length):
-            print('     ', self.__cells[i:i + self.__length], file=sys.stderr)
-        print('Points:', file=sys.stderr)
-        print('     Player: ' + self.__current_points[0], file=sys.stderr)
-        print('     AI: ' + self.__current_points[1], file=sys.stderr)
-        print('Available states:', file=sys.stderr)
+        print(self.__format_values(self.__qtable_repository.load()), file=sys.stderr)
 
-        q_table = self.__qtable_repository.load()
-        print(jsbeautifier.beautify(json.dumps(q_table), jsbeautifier.default_options()), file=sys.stderr)
+    def __format_values(self, q_table: QTable) -> str:
+        rows = [
+            str(self.__cells[i:i + self.__length])
+            for i in range(0, len(self.__cells), self.__length)
+        ]
+        pretty_qtable = jsbeautifier.beautify(json.dumps(q_table), jsbeautifier.default_options())
+
+        return "\n".join([
+            "Current state matrix:",
+            *[f"     {row}" for row in rows],
+            "Points:",
+            f"     Player: {self.__current_points[0]}",
+            f"     AI: {self.__current_points[1]}",
+            "Available states:",
+            pretty_qtable.rstrip(),
+        ])
 
 
 def cli_main() -> None:
@@ -79,9 +84,8 @@ def cli_main() -> None:
     )
     args = parser.parse_args()
 
-    with Resource.load('config.json', 'r', args.config) as cfg:
-        conf = cast(GameConfig, json.load(cfg))
-        length = conf['board-size']
+    conf = ConfigRepository(args.config).load()
+    length = conf['board-size']
 
     expected_cells = length * length
     if len(args.cells) != expected_cells:
