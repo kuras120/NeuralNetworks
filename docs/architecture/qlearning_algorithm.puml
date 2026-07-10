@@ -1,0 +1,31 @@
+@startuml
+' High-level Q-learning loop (as implemented by Process + DefaultPredictor)
+
+skinparam activity {
+    BackgroundColor #fdfdfd
+    BorderColor #777777
+}
+
+start
+:Initialize environment\n- load config (board-size, learning flag)\n- ensure qtable/state files exist;
+:Observe current board state S;
+
+while (game continues?) is (yes)
+    if (previous move exists?) then (yes)
+    :Compute reward R\n = advantage(current points) - advantage(previous points);
+    :Update Q(S_prev, A_prev)\nQ ← Q + α*(R + γ*max_a' Q(S, a') - Q)\nwhere α=learning rate, γ=discount;
+    else (no)
+        :Skip update (no prior transition);
+    endif
+
+    :Enumerate legal actions A for S\n(using Generator → neighbour states);
+    :Select next action A*\n- weight actions by stored Q(S, a)\n- fallback to uniform random if all equal;
+    :Persist chosen transition\n(store {S, A*, points} as last_move);
+    :Apply action in environment → obtain new board + updated points;
+    :Set S_prev ← S, S ← next state;
+endwhile (no)
+
+:Persist final snapshot (qtable + state);
+stop
+
+@enduml

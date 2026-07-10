@@ -1,84 +1,117 @@
+import json
 import os
-import sys
-from pathlib import Path
 import shutil
+import sys
 from importlib import resources
+from pathlib import Path
+from typing import Dict, cast, IO
 
 
 class Resource:
-    @staticmethod
-    def log(path):
-        print('State saved in ' + path, file=sys.stderr)
+    DATA_DIR: str = 'data'
 
     @staticmethod
-    def load(resource_name: str, file_mode: str, base_dir: str = None):
-        """
-        Open a resource from user-copied resources.
-
-        Resolution order for base directory:
-        1) base_dir argument (if provided)
-        2) Current working directory
-
-        Behavior:
-        - Read modes open the file from the resolved directory.
-        - Write/append modes ensure the directory exists, then open the file there.
-        """
-        base = (base_dir or os.getcwd()) + "/data"
+    def load(resource_name: str, file_mode: str, base_dir: str = ".") -> IO:
+        base = Path(base_dir) / Resource.DATA_DIR
         needs_dir = any(ch in file_mode for ch in ('w', 'a', '+'))
         if needs_dir:
             os.makedirs(base, exist_ok=True)
         return open(
-            file=os.path.join(base, resource_name),
+            file=base / resource_name,
             mode=file_mode,
             encoding='utf-8'
         )
 
     @staticmethod
-    def copy_defaults(target_dir=".", overwrite=False):
-        """
-        Copy packaged default data files into target_dir.
-        - target_dir: directory to place the files (string or Path)
-        - overwrite: if False, existing files are preserved
-        """
+    def save(resource_name: str, key: str, value: object, base_dir: str) -> None:
+        data: Dict[str, object] = {}
+        try:
+            with Resource.load(resource_name, 'r', base_dir) as f:
+                data = cast(Dict[str, object], json.load(f))
+        except FileNotFoundError:
+            pass
+
+        data[key] = value
+
+        with Resource.load(resource_name, 'w', base_dir) as f:
+            json.dump(data, f)
+            print('Value saved in file key={},value={},file={}'.format(key, value, f.name), file=sys.stderr)
+
+    @staticmethod
+    def copy_defaults(
+        source_package: str = "games_theory.resources",
+        target_dir: str = ".",
+        overwrite: bool = False,
+        generate_internals: bool = False,
+    ) -> None:
         target_root = Path(target_dir)
-        dest = target_root / "data"
-        base = resources.files("games_theory.resources") / "data"
+        dest = target_root / Resource.DATA_DIR
+        base = resources.files(source_package) / Resource.DATA_DIR
+        config_file_found = False
         with resources.as_file(base) as src_dir:
-            if overwrite:
-                # Copy the entire directory and overwrite existing files
-                shutil.copytree(src_dir, dest, dirs_exist_ok=True)
-            else:
-                # Merge without overwriting existing files
-                for root, _, files in os.walk(src_dir):
-                    print("Root {}, Files {}".format(root, files), file=sys.stderr)
-                    rel_root = Path(root).relative_to(src_dir)
-                    dest_root = dest / rel_root
-                    dest_root.mkdir(parents=True, exist_ok=True)
-                    for name in files:
-                        src_path = os.path.join(root, name)
-                        dst_path = dest_root / name
-                        if not dst_path.exists():
-                            shutil.copy2(src_path, dst_path)
+            for root, _, files in os.walk(src_dir):
+                print("Root={}, Files={}".format(root, files), file=sys.stderr)
+                rel_root = Path(root).relative_to(src_dir)
+                dest_root = dest / rel_root
+                dest_root.mkdir(parents=True, exist_ok=True)
+                for name in files:
+                    src_path = os.path.join(root, name)
+                    dst_path = dest_root / name
+                    if not dst_path.exists() or overwrite:
+                        shutil.copy2(src_path, dst_path)
+                    if name == 'config.json':
+                        config_file_found = True
 
-        print(f"Defaults copied to: {dest.resolve()}", file=sys.stderr)
+        if not config_file_found:
+            raise FileNotFoundError("config.json not found in resources")
+
+        Resource.save('config.json', 'resource_path', str(target_root), str(target_root))
+        overwrite_internals = overwrite or generate_internals
+        Resource.generate_qtable_file(str(target_root), overwrite=overwrite_internals)
+        Resource.generate_state_file(str(target_root), overwrite=overwrite_internals)
+
+        print("Defaults copied to directory={}".format(dest.resolve()), file=sys.stderr)
+
+    @staticmethod
+    def generate_qtable_file(resource_path: str = ".", overwrite: bool = False) -> None:
+        qtable_path = Path(resource_path) / Resource.DATA_DIR / 'qtable.json'
+        if qtable_path.exists() and not overwrite:
+            return
+
+        with Resource.load('qtable.json', 'w', resource_path) as qtable_file:
+            json.dump({}, qtable_file)
+            print("Q-table file generated at path={}".format(qtable_path.resolve()), file=sys.stderr)
+
+    @staticmethod
+    def generate_state_file(resource_path: str = ".", overwrite: bool = False) -> None:
+        state_path = Path(resource_path) / Resource.DATA_DIR / 'state.json'
+        if state_path.exists() and not overwrite:
+            return
+
+        with Resource.load('state.json', 'w', resource_path) as state_file:
+            json.dump({'last_move': None}, state_file)
+            print("State file generated at path={}".format(state_path.resolve()), file=sys.stderr)
 
 
-def cli_copy_defaults():
+def cli_copy_defaults() -> None:
     """
-    Console command:
-      games-theory-init [path] [--overwrite] [--use]
+    CLI init entry point for games-theory.
 
-    - path: optional destination directory (defaults to current directory)
-    - --overwrite: replace existing files if present
+    Usage:
+        games-theory-init [path] [--overwrite] [--generate-internals]
     """
     import argparse
 
     parser = argparse.ArgumentParser(
         prog="games-theory-init",
-        description="Copy default games_theory config/state files to a target directory."
+        description="Copy default games_theory config files to a target directory."
     )
     parser.add_argument("path", nargs="?", default=".", help="Destination directory (default: current directory)")
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing files if present")
+    parser.add_argument("--generate-internals", action="store_true", help="Re-generate internal games_theory files (qtable.json, state.json) based on config.json in the target directory")
     args = parser.parse_args()
-
-    Resource.copy_defaults(args.path, overwrite=args.overwrite)
+    Resource.copy_defaults(
+        target_dir=args.path,
+        overwrite=args.overwrite,
+        generate_internals=args.generate_internals,
+    )
