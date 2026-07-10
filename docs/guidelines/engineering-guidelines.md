@@ -5,6 +5,7 @@ Use these guidelines when designing or reviewing changes. `AGENTS.md` decides wh
 ## Design Principles
 
 - Keep production code in `games_theory/**` explicit about persistence, CLI contracts, and resource ownership.
+- Put lifecycle and mode decisions in the upper-level orchestrator; lower-level services should expose explicit operations instead of boolean switches that change persistence or side effects.
 - Prefer small composed services over broad classes when a component owns a distinct persistence or policy concern.
 - Keep experimental directories lightweight; do not introduce production-grade structure there unless it fixes a concrete problem.
 - Update documentation in the same change when behaviour, public CLI usage, persistence format, or architecture flow changes.
@@ -18,6 +19,7 @@ Use these guidelines when designing or reviewing changes. `AGENTS.md` decides wh
 - Do not duplicate current state across multiple resource files unless the lifecycle is intentionally different and documented.
 - Do not make Q-table semantics depend on external symbols (`X`/`O`) when canonical bot-relative state is available.
 - Do not silently overwrite user resources outside explicit init/reset workflows.
+- Do not hide write/read-only mode changes behind generic boolean flags inside lower-level services; split the operation and let the orchestrator choose.
 
 ## Documentation Standard
 

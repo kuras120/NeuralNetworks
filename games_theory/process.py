@@ -33,7 +33,9 @@ class Process:
     def move(self) -> None:
         if self.__learning:
             self.__predictor.evaluate(self.__state_repository.load(), self.__current_points, self.__hash)
-        self.__predictor.predict(self.__hash, self.__current_points)
+            self.__predictor.predict(self.__hash, self.__current_points)
+        else:
+            self.__predictor.predict_readonly(self.__hash)
 
     def print_values(self) -> None:
         print(self.__format_values(self.__qtable_repository.load()), file=sys.stderr)

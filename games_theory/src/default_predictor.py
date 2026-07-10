@@ -2,6 +2,7 @@ import random
 from typing import Optional
 
 from games_theory.src.domain_types import LastMove, Points, State, StatePayload
+from games_theory.src.generator import Generator
 from games_theory.src.predictor import (
     ActionSelector,
     QTableRepository,
@@ -83,3 +84,9 @@ class DefaultPredictor:
         self._state_repository.persist(last_move)
         self._qtable_repository.save(q_table)
         return chosen_state
+
+    def predict_readonly(self, current_state: State) -> Optional[State]:
+        q_table = self._qtable_repository.load()
+        scored_states = q_table.get(current_state, {})
+        neighbours = list(scored_states.keys()) or Generator.generate_neighbour_states(current_state)
+        return self._action_selector.choose(neighbours, scored_states)

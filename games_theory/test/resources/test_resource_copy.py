@@ -1,10 +1,12 @@
 import json
+import sys
 import tempfile
 import unittest
 from importlib import resources
 from pathlib import Path
+from unittest.mock import patch
 
-from games_theory.resources.resource import Resource
+from games_theory.resources.resource import Resource, cli_copy_defaults
 
 
 class TestResourceCopyDefaults(unittest.TestCase):
@@ -81,6 +83,40 @@ class TestResourceCopyDefaults(unittest.TestCase):
                 packaged,
                 "Existing file should be overwritten when overwrite=True",
             )
+
+    def test_generate_internal_files(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Resource.copy_defaults(target_dir=tmpdir)
+            Resource.save("config.json", "modified", True, tmpdir)
+
+            qtable_path = Path(tmpdir) / Resource.DATA_DIR / "qtable.json"
+            state_path = Path(tmpdir) / Resource.DATA_DIR / "state.json"
+            qtable_path.write_text(json.dumps({"stale": {"state": 1}}), encoding="utf-8")
+            state_path.write_text(json.dumps({"last_move": {"from": "stale"}}), encoding="utf-8")
+
+            Resource.copy_defaults(target_dir=tmpdir, generate_internals=True)
+
+            self.assertEqual({}, json.loads(qtable_path.read_text(encoding="utf-8")))
+            self.assertEqual({"last_move": None}, json.loads(state_path.read_text(encoding="utf-8")))
+
+            config_path = Path(tmpdir) / Resource.DATA_DIR / "config.json"
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+            self.assertTrue(config["modified"])
+
+    def test_cli_generate_internal_files(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            Resource.copy_defaults(target_dir=tmpdir)
+
+            qtable_path = Path(tmpdir) / Resource.DATA_DIR / "qtable.json"
+            state_path = Path(tmpdir) / Resource.DATA_DIR / "state.json"
+            qtable_path.write_text(json.dumps({"stale": {"state": 1}}), encoding="utf-8")
+            state_path.write_text(json.dumps({"last_move": {"from": "stale"}}), encoding="utf-8")
+
+            with patch.object(sys, "argv", ["games-theory-init", tmpdir, "--generate-internals"]):
+                cli_copy_defaults()
+
+            self.assertEqual({}, json.loads(qtable_path.read_text(encoding="utf-8")))
+            self.assertEqual({"last_move": None}, json.loads(state_path.read_text(encoding="utf-8")))
 
     def test_throw_error_on_not_existing_dir(self):
         with tempfile.TemporaryDirectory() as tmpdir:

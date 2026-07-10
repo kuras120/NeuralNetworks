@@ -7,6 +7,22 @@ from games_theory.resources.resource import Resource
 
 
 class TestResourceAppend(unittest.TestCase):
+    def test_load_uses_current_directory_by_default(self):
+        original_cwd = os.getcwd()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            os.chdir(tmpdir)
+            try:
+                os.makedirs("data", exist_ok=True)
+                with open(os.path.join("data", "config.json"), "w", encoding="utf-8") as f:
+                    json.dump({"learning": True}, f)
+
+                with Resource.load("config.json", "r") as f:
+                    data = json.load(f)
+            finally:
+                os.chdir(original_cwd)
+
+        self.assertEqual({"learning": True}, data)
+
     def test_append_to_new_file(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             resource_name = "test_new.json"

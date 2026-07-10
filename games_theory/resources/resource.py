@@ -11,7 +11,7 @@ class Resource:
     DATA_DIR: str = 'data'
 
     @staticmethod
-    def load(resource_name: str, file_mode: str, base_dir: str) -> IO:
+    def load(resource_name: str, file_mode: str, base_dir: str = ".") -> IO:
         base = Path(base_dir) / Resource.DATA_DIR
         needs_dir = any(ch in file_mode for ch in ('w', 'a', '+'))
         if needs_dir:
@@ -42,6 +42,7 @@ class Resource:
         source_package: str = "games_theory.resources",
         target_dir: str = ".",
         overwrite: bool = False,
+        generate_internals: bool = False,
     ) -> None:
         target_root = Path(target_dir)
         dest = target_root / Resource.DATA_DIR
@@ -65,8 +66,9 @@ class Resource:
             raise FileNotFoundError("config.json not found in resources")
 
         Resource.save('config.json', 'resource_path', str(target_root), str(target_root))
-        Resource.generate_qtable_file(str(target_root), overwrite=overwrite)
-        Resource.generate_state_file(str(target_root), overwrite=overwrite)
+        overwrite_internals = overwrite or generate_internals
+        Resource.generate_qtable_file(str(target_root), overwrite=overwrite_internals)
+        Resource.generate_state_file(str(target_root), overwrite=overwrite_internals)
 
         print("Defaults copied to directory={}".format(dest.resolve()), file=sys.stderr)
 
@@ -108,4 +110,8 @@ def cli_copy_defaults() -> None:
     parser.add_argument("--overwrite", action="store_true", help="Overwrite existing files if present")
     parser.add_argument("--generate-internals", action="store_true", help="Re-generate internal games_theory files (qtable.json, state.json) based on config.json in the target directory")
     args = parser.parse_args()
-    Resource.copy_defaults(target_dir=args.path, overwrite=args.overwrite)
+    Resource.copy_defaults(
+        target_dir=args.path,
+        overwrite=args.overwrite,
+        generate_internals=args.generate_internals,
+    )

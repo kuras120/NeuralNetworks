@@ -52,6 +52,23 @@ class DefaultPredictorTestCase(unittest.TestCase):
             state_payload["last_move"]
         )
 
+    def test_predict_readonly_does_not_write_learning_state(self):
+        predictor = DefaultPredictor(self.resource_path, rng=random.Random(0))
+
+        next_state = predictor.predict_readonly("0,0,0,0")
+
+        self.assertIn(
+            next_state,
+            {
+                "-1,0,0,0",
+                "0,-1,0,0",
+                "0,0,-1,0",
+                "0,0,0,-1",
+            },
+        )
+        self.assertEqual({}, self._read_json(self.qtable_path))
+        self.assertEqual({"last_move": None}, self._read_json(self.state_path))
+
     def test_evaluate_updates_q_table_with_reward_and_future_gain(self):
         q_table = {
             "0,0,0,0": {
