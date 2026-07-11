@@ -68,10 +68,8 @@ def load_pull_requests_from_github(previous_tag: str) -> list[PullRequest]:
         ]
     )
     prs = parse_pull_requests(load_paginated_payload(payload))
-    if not base_sha:
-        return [pr for pr in prs if pr.merged_at]
-
-    commits = set(run(["git", "rev-list", f"{base_sha}..{head_sha}"]).splitlines())
+    revision_range = f"{base_sha}..{head_sha}" if base_sha else head_sha
+    commits = set(run(["git", "rev-list", revision_range]).splitlines())
     return [
         pr
         for pr in prs

@@ -207,6 +207,61 @@ def test_paginated_pull_request_payload() -> None:
     assert [item["number"] for item in flattened] == [1, 2]
 
 
+def test_first_release_filters_prs_to_head_history() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        repo.mkdir()
+        init_repo(repo)
+        in_history = run(["git", "rev-parse", "HEAD"], repo).stdout.strip()
+        outside_history = "d" * 40
+
+        original_release_range = GENERATE_RELEASE_NOTES.release_range
+        original_run = GENERATE_RELEASE_NOTES.run
+        original_loader = GENERATE_RELEASE_NOTES.load_paginated_payload
+        original_repository = os.environ.get("GITHUB_REPOSITORY")
+
+        def fake_run(command: list[str]) -> str:
+            if command[:2] == ["gh", "api"]:
+                return "[]"
+            if command == ["git", "rev-list", in_history]:
+                return in_history
+            return original_run(command)
+
+        GENERATE_RELEASE_NOTES.release_range = lambda _: ("", in_history)
+        GENERATE_RELEASE_NOTES.run = fake_run
+        GENERATE_RELEASE_NOTES.load_paginated_payload = lambda _: [
+            {
+                "number": 1,
+                "title": "feat: included",
+                "html_url": "https://github.com/example/repo/pull/1",
+                "user": {"login": "alice"},
+                "merged_at": "2026-01-01T00:00:00Z",
+                "merge_commit_sha": in_history,
+            },
+            {
+                "number": 2,
+                "title": "feat: outside",
+                "html_url": "https://github.com/example/repo/pull/2",
+                "user": {"login": "bob"},
+                "merged_at": "2026-01-02T00:00:00Z",
+                "merge_commit_sha": outside_history,
+            },
+        ]
+        os.environ["GITHUB_REPOSITORY"] = "example/repo"
+        try:
+            prs = GENERATE_RELEASE_NOTES.load_pull_requests_from_github("")
+        finally:
+            GENERATE_RELEASE_NOTES.release_range = original_release_range
+            GENERATE_RELEASE_NOTES.run = original_run
+            GENERATE_RELEASE_NOTES.load_paginated_payload = original_loader
+            if original_repository is None:
+                os.environ.pop("GITHUB_REPOSITORY", None)
+            else:
+                os.environ["GITHUB_REPOSITORY"] = original_repository
+
+        assert [pr.number for pr in prs] == [1]
+
+
 def test_version_update_pr_noop() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         repo = Path(tmp) / "repo"
@@ -230,6 +285,7 @@ def main() -> int:
     test_prepare_release()
     test_generate_release_notes()
     test_paginated_pull_request_payload()
+    test_first_release_filters_prs_to_head_history()
     test_version_update_pr_noop()
     test_workflow_yaml()
     print("release tooling tests OK")
