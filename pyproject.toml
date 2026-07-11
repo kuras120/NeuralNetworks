@@ -4,7 +4,7 @@ build-backend = "flit_core.buildapi"
 
 [project]
 name = "games-theory"
-dynamic = ["version"]
+version = "0.0.2"
 description = "Q-learning backend for games"
 requires-python = ">=3.9"
 dependencies = [

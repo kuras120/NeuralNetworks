@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="800" viewBox="0 0 960 800" role="img" aria-labelledby="title desc">
+  <title id="title">GamesTheory release notes draft</title>
+  <desc id="desc">Mockup of the GamesTheory release notes layout with artifact title, version heading, and grouped pull request sections.</desc>
+  <rect width="960" height="800" fill="#f6f8fa"/>
+  <rect x="120" y="72" width="720" height="656" rx="8" fill="#ffffff" stroke="#d0d7de"/>
+  <text x="160" y="136" font-family="Arial, Helvetica, sans-serif" font-size="36" font-weight="700" fill="#24292f">GamesTheory 0.3.0</text>
+  <line x1="160" y1="166" x2="800" y2="166" stroke="#d0d7de"/>
+
+  <text x="160" y="218" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#24292f">What&apos;s Changed in 0.3.0</text>
+
+  <text x="160" y="284" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#0969da">🚀 Features</text>
+  <circle cx="174" cy="322" r="4" fill="#57606a"/>
+  <text x="192" y="328" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#24292f">feat: add release version selector</text>
+  <text x="652" y="328" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#57606a">#40 abc1234</text>
+  <circle cx="174" cy="358" r="4" fill="#57606a"/>
+  <text x="192" y="364" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#24292f">feature(workflow): group generated notes</text>
+  <text x="652" y="364" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#57606a">#41 def5678</text>
+
+  <text x="160" y="430" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#bf3989">🐛 Bug fixes</text>
+  <circle cx="174" cy="468" r="4" fill="#57606a"/>
+  <text x="192" y="474" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#24292f">fix: release tag validation</text>
+  <text x="652" y="474" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#57606a">#42 f00ba42</text>
+
+  <text x="160" y="540" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#6f42c1">🧰 Others</text>
+  <circle cx="174" cy="578" r="4" fill="#57606a"/>
+  <text x="192" y="584" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#24292f">docs: describe manual release workflow</text>
+  <text x="682" y="584" font-family="Arial, Helvetica, sans-serif" font-size="16" fill="#57606a">#43</text>
+
+  <line x1="160" y1="622" x2="800" y2="622" stroke="#d0d7de"/>
+  <text x="160" y="666" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="#24292f">Authors</text>
+  <circle cx="174" cy="704" r="4" fill="#57606a"/>
+  <text x="192" y="710" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="#0969da">@octocat</text>
+</svg>

@@ -11,7 +11,7 @@ This guide contains operational repository information for maintainers and agent
 - Production package guidelines: `docs/guidelines/production-package.md`
 - Architecture diagrams: `docs/architecture/`
 - Project planning workflow: `docs/projects/project-planning.md`
-- Changelog and release scripts: `games_theory/changelog`, `games_theory/generate_changelog.sh`, `games_theory/version_bump.py`
+- Release workflow: `docs/guidelines/release-workflow.md`
 
 ## Repository Map
 
@@ -90,14 +90,12 @@ This guide contains operational repository information for maintainers and agent
 - `games_theory/test/src/test_generator.py`: verifies canonical neighbour generation for bot moves.
 - `games_theory/test/src/test_state_encoder.py`: verifies `X/O/N` to `-1/0/1` normalization relative to `ai-char`.
 - `games_theory/test/resources/`: verifies resource copy/save helpers.
-- `games_theory/test/test_generate_changelog.sh`: smoke test for changelog generation.
 
 ### Release Workflow
 
-1. Update changelog entries in `games_theory/changelog`.
-2. Run `python games_theory/version_bump.py bump` or `python games_theory/version_bump.py version`.
-3. Build artifacts via `flit build` when release work is in scope.
-4. Use `generate_changelog.sh $VERSION` in CI to push notes into `$GITHUB_ENV`.
+Releases are manual GitHub Actions runs. Leave the optional `version` input empty to release the next patch version, or enter an explicit `X.Y.Z` version to override it. The workflow builds artifacts with the selected version, generates structured release notes from merged pull requests since the previous semver tag, and opens a post-release pull request that persists the released version in `pyproject.toml`. Release helper scripts and deterministic release tooling tests live in `scripts/`.
+
+See `docs/guidelines/release-workflow.md` for version selection, release-note grouping, and verification details.
 
 ## Experiment Sandboxes
 
