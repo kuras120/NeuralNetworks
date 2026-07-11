@@ -6,6 +6,8 @@ This guide describes the manual GitHub release workflow for the `games-theory` p
 
 Releases are started manually from the GitHub Actions `release` workflow.
 
+The workflow is dispatched from GitHub's built-in branch selector. Choose the branch to release in the `Run workflow from` control, for example `release/1.x` for `1.x.x` and `master` for the current major line. The workflow checks out that branch in every job, creates the release tag against that branch, and opens the post-release version update pull request back into the same branch.
+
 The workflow exposes one optional input:
 
 - `version`: exact release version in `X.Y.Z` format.
@@ -17,13 +19,15 @@ When `version` is empty, the workflow finds the latest semver tag without a `v` 
 
 If no semver tag exists, the workflow reads `pyproject.toml` and applies the same next-patch rule. The workflow rejects non-semver versions and stops if the selected tag already exists. Explicit versions are not compared with the latest tag so maintenance releases for older major lines remain possible.
 
+The previous tag used for release notes is selected from semver tags reachable from the checked-out release `HEAD`. For explicit releases, the previous tag must also be lower than the selected version, so a `1.x` maintenance release does not use a newer `2.x` tag as its notes base.
+
 GitHub's manual workflow form supports only static input defaults, so the next patch version cannot be prefilled from repository tags before the run starts. Leave `version` empty for the calculated patch release, or type a higher `X.Y.Z` version when preparing a minor or major release.
 
 ## Artifact Version
 
 `pyproject.toml` stores the latest released package version. Release tags and built artifacts remain the source of truth for what was actually published.
 
-During the build job, GitHub Actions writes the selected version into `pyproject.toml` in the checked-out runner workspace before building the wheel and source distribution. After the GitHub release is created, the workflow opens a pull request that persists the same version in `pyproject.toml` on `master`.
+During the build job, GitHub Actions writes the selected version into `pyproject.toml` in the checked-out runner workspace before building the wheel and source distribution. After the GitHub release is created, the workflow opens a pull request that persists the same version in `pyproject.toml` on the selected release branch.
 
 Release helper scripts live under `scripts/`:
 

@@ -107,6 +107,47 @@ def test_prepare_release() -> None:
         assert duplicate.returncode != 0
 
 
+def test_prepare_release_uses_branch_local_previous_tag() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        repo.mkdir()
+        init_repo(repo)
+
+        run(["python3", str(SET_VERSION), "1.3.0"], repo)
+        run(["git", "add", "pyproject.toml"], repo)
+        run(["git", "commit", "-m", "chore: set 1.3.0"], repo)
+        run(["git", "tag", "1.3.0"], repo)
+
+        run(["python3", str(SET_VERSION), "1.4.0"], repo)
+        run(["git", "add", "pyproject.toml"], repo)
+        run(["git", "commit", "-m", "chore: set 1.4.0"], repo)
+        run(["git", "tag", "1.4.0"], repo)
+
+        run(["git", "checkout", "-b", "release-1"], repo)
+        run(["git", "checkout", "-b", "mainline"], repo)
+        run(["python3", str(SET_VERSION), "2.0.0"], repo)
+        run(["git", "add", "pyproject.toml"], repo)
+        run(["git", "commit", "-m", "chore: set 2.0.0"], repo)
+        run(["git", "tag", "2.0.0"], repo)
+        run(["git", "checkout", "release-1"], repo)
+
+        output = repo / "outputs.txt"
+        run(
+            [
+                "python3",
+                str(PREPARE),
+                "--requested-version",
+                "1.4.1",
+                "--output-file",
+                str(output),
+            ],
+            repo,
+        )
+        content = output.read_text(encoding="utf-8")
+        assert "VERSION=1.4.1" in content
+        assert "PREVIOUS_TAG=1.4.0" in content
+
+
 def test_generate_release_notes() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         workdir = Path(tmp)
@@ -281,13 +322,24 @@ def test_workflow_yaml() -> None:
         raise AssertionError(result.stderr or result.stdout)
 
 
+def test_release_workflow_branch_input() -> None:
+    content = WORKFLOW.read_text(encoding="utf-8")
+    assert "release_branch:" not in content
+    assert "RELEASE_BRANCH: ${{ github.ref_name }}" in content
+    assert "ref: ${{ env.RELEASE_BRANCH }}" in content
+    assert "target_commitish: ${{ env.RELEASE_BRANCH }}" in content
+    assert '--base "${{ env.RELEASE_BRANCH }}"' in content
+
+
 def main() -> int:
     test_prepare_release()
+    test_prepare_release_uses_branch_local_previous_tag()
     test_generate_release_notes()
     test_paginated_pull_request_payload()
     test_first_release_filters_prs_to_head_history()
     test_version_update_pr_noop()
     test_workflow_yaml()
+    test_release_workflow_branch_input()
     print("release tooling tests OK")
     return 0
 

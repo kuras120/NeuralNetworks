@@ -26,12 +26,26 @@ def run_git(args: list[str], check: bool = True) -> str:
     return result.stdout.strip()
 
 
-def latest_semver_tag() -> str:
-    tags = run_git(["tag", "--list", "--sort=-v:refname"])
-    for tag in tags.splitlines():
-        if SEMVER_PATTERN.fullmatch(tag):
+def semver_tuple(version: str) -> tuple[int, int, int]:
+    return tuple(int(part) for part in version.split("."))
+
+
+def reachable_semver_tags() -> list[str]:
+    tags = run_git(["tag", "--merged", "HEAD", "--list", "--sort=-v:refname"])
+    return [tag for tag in tags.splitlines() if SEMVER_PATTERN.fullmatch(tag)]
+
+
+def previous_tag_for_release(version: str) -> str:
+    release_parts = semver_tuple(version)
+    for tag in reachable_semver_tags():
+        if semver_tuple(tag) < release_parts:
             return tag
     return ""
+
+
+def latest_semver_tag() -> str:
+    tags = reachable_semver_tags()
+    return tags[0] if tags else ""
 
 
 def tag_exists(version: str) -> bool:
@@ -83,12 +97,12 @@ def parse_args() -> argparse.Namespace:
 def main() -> int:
     args = parse_args()
     requested_version = args.requested_version.strip()
-    previous_tag = latest_semver_tag()
 
     if requested_version:
         release_version = requested_version
     else:
-        release_version = next_patch(previous_tag or pyproject_version())
+        latest_tag = latest_semver_tag()
+        release_version = next_patch(latest_tag or pyproject_version())
 
     if not SEMVER_PATTERN.fullmatch(release_version):
         print(
@@ -96,6 +110,8 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
+
+    previous_tag = previous_tag_for_release(release_version)
 
     if tag_exists(release_version):
         print(f"Tag {release_version} already exists.", file=sys.stderr)

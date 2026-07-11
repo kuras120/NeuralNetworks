@@ -8,6 +8,9 @@ on:
         required: false
         type: string
 
+env:
+  RELEASE_BRANCH: ${{ github.ref_name }}
+
 permissions:
   contents: write
   pull-requests: write
@@ -18,6 +21,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_BRANCH }}
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -48,6 +53,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ env.RELEASE_BRANCH }}
           fetch-depth: 0
 
       - name: Determine release version
@@ -62,6 +68,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_BRANCH }}
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -96,6 +104,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ env.RELEASE_BRANCH }}
           fetch-depth: 0
 
       - name: Download artifacts
@@ -119,6 +128,7 @@ jobs:
           tag_name: ${{ env.VERSION }}
           name: GamesTheory ${{ env.VERSION }}
           body_path: release-notes.md
+          target_commitish: ${{ env.RELEASE_BRANCH }}
 
   version_update:
     needs: [prepare, publish]
@@ -130,10 +140,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
+          ref: ${{ env.RELEASE_BRANCH }}
           fetch-depth: 0
 
       - name: Set package version
         run: python scripts/set_package_version.py "${{ env.VERSION }}"
 
       - name: Create version update pull request
-        run: python scripts/create_version_update_pr.py --version "${{ env.VERSION }}" --base master
+        run: >
+          python scripts/create_version_update_pr.py
+          --version "${{ env.VERSION }}"
+          --base "${{ env.RELEASE_BRANCH }}"
