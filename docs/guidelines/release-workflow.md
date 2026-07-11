@@ -15,7 +15,7 @@ When `version` is empty, the workflow finds the latest semver tag without a `v` 
 - latest tag `0.2.4` becomes `0.2.5`
 - latest tag `1.9.0` becomes `1.9.1`
 
-If no semver tag exists, the workflow reads `pyproject.toml` and applies the same next-patch rule. The workflow rejects non-semver versions and stops if the selected tag already exists.
+If no semver tag exists, the workflow reads `pyproject.toml` and applies the same next-patch rule. The workflow rejects non-semver versions and stops if the selected tag already exists. Explicit versions are not compared with the latest tag so maintenance releases for older major lines remain possible.
 
 GitHub's manual workflow form supports only static input defaults, so the next patch version cannot be prefilled from repository tags before the run starts. Leave `version` empty for the calculated patch release, or type a higher `X.Y.Z` version when preparing a minor or major release.
 
