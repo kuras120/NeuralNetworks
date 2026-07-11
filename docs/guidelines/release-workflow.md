@@ -19,7 +19,7 @@ When `version` is empty and `pyproject.toml` contains a development version, the
 - `0.2.5.dev0` becomes `0.2.5`
 - `1.9.1.dev0` becomes `1.9.1`
 
-When the repository still contains a clean `X.Y.Z` version, the workflow falls back to the next patch from the latest reachable semver tag or from `pyproject.toml`. The workflow rejects non-semver release inputs and stops if the selected tag already exists. Explicit versions must be greater than the latest semver tag reachable from the selected release branch, so maintenance releases are checked against their own branch history instead of unrelated newer major lines.
+When the repository still contains a clean `X.Y.Z` version, the workflow falls back to the next patch from the latest reachable semver tag or from `pyproject.toml`. The workflow rejects non-semver release inputs and stops if the selected tag already exists. Explicit versions must be greater than the latest semver tag reachable from the selected release branch and must not be lower than the clean base version declared in `pyproject.toml`, so maintenance releases are checked against their own branch history instead of unrelated newer major lines.
 
 After every release, the post-release pull request sets `pyproject.toml` to the next patch development version. For example, releasing `1.5.0` creates a final branch state of `1.5.1.dev0`.
 
@@ -45,6 +45,7 @@ Release helper scripts live under `scripts/`:
 - `scripts/workflow/set_package_version.py`: updates package metadata in local verification and helper flows.
 - `scripts/workflow/generate_release_notes.py`: generates the Markdown release body from git commits.
 - `scripts/workflow/create_version_update_pr.py`: creates the post-release pull request for the next development version.
+- `scripts/workflow/workflow_common.py`: keeps shared version parsing and `pyproject.toml` updates out of the workflow entry points.
 
 ## Release Notes Format
 

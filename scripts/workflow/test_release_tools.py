@@ -208,6 +208,42 @@ def test_prepare_release_rejects_branch_local_downgrade() -> None:
         assert "PREVIOUS_TAG=1.5.1" in content
 
 
+def test_prepare_release_rejects_version_below_project_base() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        repo.mkdir()
+        init_repo(repo, version="1.9.0")
+        run(["git", "tag", "1.9.0"], repo)
+
+        run(["python3", str(SET_VERSION), "2.0.0.dev0"], repo)
+        run(["git", "add", "pyproject.toml"], repo)
+        run(["git", "commit", "-m", "chore: start 2.0.0 development"], repo)
+
+        rejected = run(
+            ["python3", str(PREPARE), "--requested-version", "1.9.1"],
+            repo,
+            check=False,
+        )
+        assert rejected.returncode != 0
+        assert "must not be lower than project base 2.0.0" in rejected.stderr
+
+        output = repo / "outputs.txt"
+        run(
+            [
+                "python3",
+                str(PREPARE),
+                "--requested-version",
+                "2.0.0",
+                "--output-file",
+                str(output),
+            ],
+            repo,
+        )
+        content = output.read_text(encoding="utf-8")
+        assert "VERSION=2.0.0" in content
+        assert "PREVIOUS_TAG=1.9.0" in content
+
+
 def test_prepare_release_branch() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         repo = Path(tmp) / "repo"
@@ -455,6 +491,7 @@ def main() -> int:
     test_prepare_release()
     test_prepare_release_uses_branch_local_previous_tag()
     test_prepare_release_rejects_branch_local_downgrade()
+    test_prepare_release_rejects_version_below_project_base()
     test_prepare_release_branch()
     test_generate_release_notes()
     test_paginated_pull_request_payload()

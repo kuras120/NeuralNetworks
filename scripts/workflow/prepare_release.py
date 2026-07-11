@@ -5,17 +5,19 @@ from __future__ import annotations
 
 import argparse
 import os
-import re
 import subprocess
 import sys
 from pathlib import Path
 
-
-CLEAN_VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
-DEV_VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+\.dev0$")
-PROJECT_VERSION_PATTERN = re.compile(r'(?m)^version = "(\d+\.\d+\.\d+(?:\.dev0)?)"$')
-BASELINE_VERSION = "0.0.1.dev0"
-PYPROJECT_PATH = Path("pyproject.toml")
+from workflow_common import (
+    clean_version_base,
+    is_clean_version,
+    is_dev_version,
+    next_dev_version,
+    next_patch,
+    project_version,
+    semver_tuple,
+)
 
 
 def run_git(args: list[str], check: bool = True) -> str:
@@ -28,13 +30,9 @@ def run_git(args: list[str], check: bool = True) -> str:
     return result.stdout.strip()
 
 
-def semver_tuple(version: str) -> tuple[int, int, int]:
-    return tuple(int(part) for part in version.split("."))
-
-
 def reachable_semver_tags() -> list[str]:
     tags = run_git(["tag", "--merged", "HEAD", "--list", "--sort=-v:refname"])
-    return [tag for tag in tags.splitlines() if CLEAN_VERSION_PATTERN.fullmatch(tag)]
+    return [tag for tag in tags.splitlines() if is_clean_version(tag)]
 
 
 def previous_tag_for_release(version: str) -> str:
@@ -57,6 +55,10 @@ def release_version_is_after_latest_reachable_tag(version: str) -> bool:
     return semver_tuple(version) > semver_tuple(latest_tag)
 
 
+def release_version_is_not_below_project_base(version: str) -> bool:
+    return semver_tuple(version) >= semver_tuple(clean_version_base(project_version()))
+
+
 def tag_exists(version: str) -> bool:
     result = subprocess.run(
         ["git", "rev-parse", "--verify", "--quiet", f"refs/tags/{version}"],
@@ -66,36 +68,13 @@ def tag_exists(version: str) -> bool:
     return result.returncode == 0
 
 
-def next_patch(base_version: str) -> str:
-    major, minor, patch = [int(part) for part in base_version.split(".")]
-    return f"{major}.{minor}.{patch + 1}"
-
-
-def next_dev_version(release_version: str) -> str:
-    return f"{next_patch(release_version)}.dev0"
-
-
-def clean_version_base(version: str) -> str:
-    if DEV_VERSION_PATTERN.fullmatch(version):
-        return version.removesuffix(".dev0")
-    return version
-
-
-def pyproject_version() -> str:
-    content = PYPROJECT_PATH.read_text(encoding="utf-8")
-    match = PROJECT_VERSION_PATTERN.search(content)
-    if match:
-        return match.group(1)
-    return BASELINE_VERSION
-
-
 def default_release_version() -> str:
-    project_version = pyproject_version()
-    if DEV_VERSION_PATTERN.fullmatch(project_version):
-        return clean_version_base(project_version)
+    current_project_version = project_version()
+    if is_dev_version(current_project_version):
+        return clean_version_base(current_project_version)
 
     latest_tag = latest_semver_tag()
-    return next_patch(latest_tag or project_version)
+    return next_patch(latest_tag or current_project_version)
 
 
 def write_github_outputs(
@@ -137,7 +116,7 @@ def main() -> int:
     else:
         release_version = default_release_version()
 
-    if not CLEAN_VERSION_PATTERN.fullmatch(release_version):
+    if not is_clean_version(release_version):
         print(
             f"Release version must use X.Y.Z semver without a v prefix. Got: {release_version}",
             file=sys.stderr,
@@ -150,6 +129,17 @@ def main() -> int:
         print(
             f"Release version {release_version} must be greater than "
             f"latest reachable tag {latest_semver_tag()}.",
+            file=sys.stderr,
+        )
+        return 1
+
+    if requested_version and not release_version_is_not_below_project_base(
+        release_version
+    ):
+        project_base = clean_version_base(project_version())
+        print(
+            f"Release version {release_version} must not be lower than "
+            f"project base {project_base}.",
             file=sys.stderr,
         )
         return 1

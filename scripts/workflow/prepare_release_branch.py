@@ -5,31 +5,14 @@ from __future__ import annotations
 
 import argparse
 import os
-import re
 import subprocess
 from pathlib import Path
 
-
-CLEAN_VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
-DEV_VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+\.dev0$")
-PYPROJECT_PATH = Path("pyproject.toml")
+from workflow_common import is_clean_version, is_dev_version, set_project_version
 
 
 def run(command: list[str]) -> subprocess.CompletedProcess[str]:
     return subprocess.run(command, check=True, text=True, capture_output=True)
-
-
-def set_project_version(version: str) -> None:
-    content = PYPROJECT_PATH.read_text(encoding="utf-8")
-    next_content, count = re.subn(
-        r'(?m)^version = "\d+\.\d+\.\d+(?:\.dev0)?"$',
-        f'version = "{version}"',
-        content,
-        count=1,
-    )
-    if count != 1:
-        raise RuntimeError("Could not find a static project version in pyproject.toml.")
-    PYPROJECT_PATH.write_text(next_content, encoding="utf-8")
 
 
 def has_changes() -> bool:
@@ -85,9 +68,9 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    if not CLEAN_VERSION_PATTERN.fullmatch(args.version):
+    if not is_clean_version(args.version):
         raise ValueError(f"Version must use X.Y.Z semver. Got: {args.version}")
-    if not DEV_VERSION_PATTERN.fullmatch(args.next_dev_version):
+    if not is_dev_version(args.next_dev_version):
         raise ValueError(
             f"Next development version must use X.Y.Z.dev0. Got: {args.next_dev_version}"
         )

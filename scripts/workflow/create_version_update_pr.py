@@ -5,13 +5,10 @@ from __future__ import annotations
 
 import argparse
 import os
-import re
 import subprocess
 import sys
 
-
-VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
-DEV_VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+\.dev0$")
+from workflow_common import is_clean_version, is_dev_version
 
 
 def run(command: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -51,10 +48,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    if not VERSION_PATTERN.fullmatch(args.version):
+    if not is_clean_version(args.version):
         print(f"Version must use X.Y.Z semver. Got: {args.version}", file=sys.stderr)
         return 1
-    if not DEV_VERSION_PATTERN.fullmatch(args.next_dev_version):
+    if not is_dev_version(args.next_dev_version):
         print(
             f"Next development version must use X.Y.Z.dev0. Got: {args.next_dev_version}",
             file=sys.stderr,

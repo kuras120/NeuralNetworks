@@ -4,12 +4,8 @@
 from __future__ import annotations
 
 import argparse
-import re
-from pathlib import Path
 
-
-VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+(?:\.dev0)?$")
-PYPROJECT_PATH = Path("pyproject.toml")
+from workflow_common import is_clean_version, is_dev_version, set_project_version
 
 
 def parse_args() -> argparse.Namespace:
@@ -20,20 +16,10 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    if not VERSION_PATTERN.fullmatch(args.version):
+    if not (is_clean_version(args.version) or is_dev_version(args.version)):
         raise ValueError(f"Version must use X.Y.Z or X.Y.Z.dev0. Got: {args.version}")
 
-    content = PYPROJECT_PATH.read_text(encoding="utf-8")
-    next_content, count = re.subn(
-        r'(?m)^version = "\d+\.\d+\.\d+(?:\.dev0)?"$',
-        f'version = "{args.version}"',
-        content,
-        count=1,
-    )
-    if count != 1:
-        raise RuntimeError("Could not find a static project version in pyproject.toml.")
-
-    PYPROJECT_PATH.write_text(next_content, encoding="utf-8")
+    set_project_version(args.version)
     print(f"Set package version to {args.version}")
     return 0
 
