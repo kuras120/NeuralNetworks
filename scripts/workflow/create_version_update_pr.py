@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Create a pull request that persists the released version in pyproject.toml."""
+"""Create a pull request for the post-release development version bump."""
 
 from __future__ import annotations
 
@@ -10,16 +10,12 @@ import subprocess
 import sys
 
 
-SEMVER_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
+VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
+DEV_VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+\.dev0$")
 
 
 def run(command: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
     return subprocess.run(command, check=check, text=True, capture_output=True)
-
-
-def has_changes() -> bool:
-    result = run(["git", "status", "--porcelain"])
-    return bool(result.stdout.strip())
 
 
 def existing_pr(branch: str) -> str:
@@ -43,29 +39,29 @@ def existing_pr(branch: str) -> str:
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Create version update pull request.")
     parser.add_argument("--version", required=True, help="Released X.Y.Z version.")
+    parser.add_argument(
+        "--next-dev-version",
+        required=True,
+        help="Next X.Y.Z.dev0 development version.",
+    )
     parser.add_argument("--base", default="master", help="Base branch for the pull request.")
+    parser.add_argument("--head", required=True, help="Head branch for the pull request.")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    if not SEMVER_PATTERN.fullmatch(args.version):
+    if not VERSION_PATTERN.fullmatch(args.version):
         print(f"Version must use X.Y.Z semver. Got: {args.version}", file=sys.stderr)
         return 1
+    if not DEV_VERSION_PATTERN.fullmatch(args.next_dev_version):
+        print(
+            f"Next development version must use X.Y.Z.dev0. Got: {args.next_dev_version}",
+            file=sys.stderr,
+        )
+        return 1
 
-    if not has_changes():
-        print("No version update changes to publish.")
-        return 0
-
-    branch = f"version-bump-{args.version}"
-    run(["git", "config", "user.email", "github-actions[bot]@users.noreply.github.com"])
-    run(["git", "config", "user.name", "github-actions[bot]"])
-    run(["git", "checkout", "-B", branch])
-    run(["git", "add", "pyproject.toml"])
-    run(["git", "commit", "-m", f"chore(release): update package version to {args.version}"])
-    run(["git", "push", "--force-with-lease", "--set-upstream", "origin", branch])
-
-    existing_url = existing_pr(branch)
+    existing_url = existing_pr(args.head)
     if existing_url:
         print(f"Version update pull request already exists: {existing_url}")
         return 0
@@ -76,8 +72,9 @@ def main() -> int:
         return 1
 
     body = (
-        f"Persist the package version released as `{args.version}` in `pyproject.toml`.\n\n"
-        "The release artifact and tag were already created by the manual release workflow."
+        f"Release `{args.version}` was published from the first commit on this branch.\n\n"
+        f"This pull request moves `pyproject.toml` to `{args.next_dev_version}` "
+        "for the next development cycle."
     )
     run(
         [
@@ -85,16 +82,16 @@ def main() -> int:
             "pr",
             "create",
             "--title",
-            f"chore(release): update package version to {args.version}",
+            f"chore(release): start {args.next_dev_version} development",
             "--body",
             body,
             "--base",
             args.base,
             "--head",
-            branch,
+            args.head,
         ]
     )
-    print(f"Created version update pull request for {args.version}.")
+    print(f"Created version update pull request for {args.next_dev_version}.")
     return 0
 
 

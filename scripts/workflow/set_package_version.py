@@ -8,24 +8,24 @@ import re
 from pathlib import Path
 
 
-SEMVER_PATTERN = re.compile(r"^\d+\.\d+\.\d+$")
+VERSION_PATTERN = re.compile(r"^\d+\.\d+\.\d+(?:\.dev0)?$")
 PYPROJECT_PATH = Path("pyproject.toml")
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Set package version in pyproject.toml.")
-    parser.add_argument("version", help="X.Y.Z release version.")
+    parser.add_argument("version", help="X.Y.Z release or X.Y.Z.dev0 development version.")
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    if not SEMVER_PATTERN.fullmatch(args.version):
-        raise ValueError(f"Release version must use X.Y.Z semver. Got: {args.version}")
+    if not VERSION_PATTERN.fullmatch(args.version):
+        raise ValueError(f"Version must use X.Y.Z or X.Y.Z.dev0. Got: {args.version}")
 
     content = PYPROJECT_PATH.read_text(encoding="utf-8")
     next_content, count = re.subn(
-        r'(?m)^version = "\d+\.\d+\.\d+"$',
+        r'(?m)^version = "\d+\.\d+\.\d+(?:\.dev0)?"$',
         f'version = "{args.version}"',
         content,
         count=1,

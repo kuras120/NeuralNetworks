@@ -14,7 +14,7 @@ This file orchestrates agent work in the repository. Use it first, then open the
 | Architecture and integrations | `docs/architecture/**` | Read before changing runtime flow, integrations, CLI orchestration, or predictor/control-flow design. |
 | Research notes | `docs/research/**` | Read before revisiting tool choices, third-party automation, or previously researched alternatives. |
 | Project plans | `docs/projects/**` | Read or create a temporary plan before every non-trivial implementation change; wait for user confirmation or feedback before implementation; wait again for implementation/test acceptance before cleanup; delete completed plans after user review, implementation, tests, and durable documentation updates. |
-| Automation scripts | `scripts/**` | Store repeatable process automation and agent verification scripts here. |
+| Automation scripts | `scripts/**` | Store repeatable process automation and agent verification scripts here; GitHub Actions Python helpers live in `scripts/workflow/**`. |
 | Repository guide | `docs/guidelines/repository-guide.md` | Read for repository setup, module map, workflows, tests, and release process. |
 | Experimental sandboxes | `NN/`, `knn/`, `TF/`, `scratch/`, `data/` | Read local code, `docs/domain/ml-sandbox-domain.md`, and `docs/guidelines/repository-guide.md` experiment notes unless the change crosses production boundaries. |
 

@@ -12,12 +12,16 @@ The workflow exposes one optional input:
 
 - `version`: exact release version in `X.Y.Z` format.
 
-When `version` is empty, the workflow finds the latest semver tag without a `v` prefix and selects the next patch version:
+Target branches store the next development version in `pyproject.toml` using PEP 440 `.dev0`, for example `1.4.2.dev0`.
 
-- latest tag `0.2.4` becomes `0.2.5`
-- latest tag `1.9.0` becomes `1.9.1`
+When `version` is empty and `pyproject.toml` contains a development version, the workflow releases the clean base version:
 
-If no semver tag exists, the workflow reads `pyproject.toml` and applies the same next-patch rule. The workflow rejects non-semver versions and stops if the selected tag already exists. Explicit versions are not compared with the latest tag so maintenance releases for older major lines remain possible.
+- `0.2.5.dev0` becomes `0.2.5`
+- `1.9.1.dev0` becomes `1.9.1`
+
+When the repository still contains a clean `X.Y.Z` version, the workflow falls back to the next patch from the latest reachable semver tag or from `pyproject.toml`. The workflow rejects non-semver release inputs and stops if the selected tag already exists. Explicit versions must be greater than the latest semver tag reachable from the selected release branch, so maintenance releases are checked against their own branch history instead of unrelated newer major lines.
+
+After every release, the post-release pull request sets `pyproject.toml` to the next patch development version. For example, releasing `1.5.0` creates a final branch state of `1.5.1.dev0`.
 
 The previous tag used for release notes is selected from semver tags reachable from the checked-out release `HEAD`. For explicit releases, the previous tag must also be lower than the selected version, so a `1.x` maintenance release does not use a newer `2.x` tag as its notes base.
 
@@ -25,16 +29,22 @@ GitHub's manual workflow form supports only static input defaults, so the next p
 
 ## Artifact Version
 
-`pyproject.toml` stores the latest released package version. Release tags and built artifacts remain the source of truth for what was actually published.
+`pyproject.toml` on long-lived branches stores the next development version. Release tags and built artifacts remain the source of truth for what was actually published.
 
-During the build job, GitHub Actions writes the selected version into `pyproject.toml` in the checked-out runner workspace before building the wheel and source distribution. After the GitHub release is created, the workflow opens a pull request that persists the same version in `pyproject.toml` on the selected release branch.
+The workflow prepares one release update branch with two commits:
+
+1. The release commit sets `pyproject.toml` to the clean released version.
+2. The next-development commit sets `pyproject.toml` to the next `X.Y.Z.dev0` version.
+
+The build job and GitHub release tag use the release commit SHA, so source archives and wheel/sdist metadata agree. After the GitHub release is created, the workflow opens a pull request from the same branch back into the selected release branch. Merging that pull request leaves the selected branch on the next development version.
 
 Release helper scripts live under `scripts/`:
 
-- `scripts/prepare_release.py`: selects and validates the release version.
-- `scripts/set_package_version.py`: updates build metadata in the runner workspace.
-- `scripts/generate_release_notes.py`: generates the Markdown release body from git commits.
-- `scripts/create_version_update_pr.py`: creates the post-release pull request that persists `pyproject.toml`.
+- `scripts/workflow/prepare_release.py`: selects and validates the release version.
+- `scripts/workflow/prepare_release_branch.py`: creates the release and next-development commits.
+- `scripts/workflow/set_package_version.py`: updates package metadata in local verification and helper flows.
+- `scripts/workflow/generate_release_notes.py`: generates the Markdown release body from git commits.
+- `scripts/workflow/create_version_update_pr.py`: creates the post-release pull request for the next development version.
 
 ## Release Notes Format
 
@@ -84,7 +94,7 @@ Local verification can confirm the package still builds and the repository tests
 
 ```bash
 scripts/verify.sh
-python scripts/test_release_tools.py
+python scripts/workflow/test_release_tools.py
 python -m build
 ```
 

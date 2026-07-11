@@ -94,7 +94,7 @@ This guide contains operational repository information for maintainers and agent
 
 ### Release Workflow
 
-Releases are manual GitHub Actions runs. Leave the optional `version` input empty to release the next patch version, or enter an explicit `X.Y.Z` version to override it. The workflow builds artifacts with the selected version, generates structured release notes from merged pull requests since the previous semver tag, and opens a post-release pull request that persists the released version in `pyproject.toml`. Release helper scripts and deterministic release tooling tests live in `scripts/`.
+Releases are manual GitHub Actions runs from GitHub's built-in branch selector. Long-lived branches store the next development version in `pyproject.toml` using PEP 440 `.dev0`; leave the optional `version` input empty to release that clean base version, or enter an explicit `X.Y.Z` version to override it. The workflow builds artifacts and tags the clean release-version commit, generates structured release notes from merged pull requests since the previous semver tag, and opens a post-release pull request that moves the selected branch to the next patch `.dev0` version. Release helper scripts and deterministic release tooling tests live in `scripts/workflow/`.
 
 See `docs/guidelines/release-workflow.md` for version selection, release-note grouping, and verification details.
 
@@ -110,6 +110,7 @@ See `docs/guidelines/release-workflow.md` for version selection, release-note gr
 
 - `requirements.txt`: consolidated dependency list for experiments and tooling.
 - `chess_runtime.sh`: helper script for chess-oriented experiments; inspect parameters before running.
+- `scripts/workflow/`: Python helpers used by GitHub Actions release automation and their deterministic checks.
 - `scripts/verify.sh`: repeatable agent verification: compile production code, run unit tests, and check diff whitespace.
 - `scripts/tictactoe_rebuild.sh`: reinstall package locally and optionally reset tic-tac-toe resources; pass `--reset` as the second argument for non-interactive reset.
 - `scripts/tictactoe_run.sh`: run a tic-tac-toe CLI smoke command against generated resources.

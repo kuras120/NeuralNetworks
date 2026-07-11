@@ -48,6 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.version.outputs.VERSION }}
+      NEXT_DEV_VERSION: ${{ steps.version.outputs.NEXT_DEV_VERSION }}
       PREVIOUS_TAG: ${{ steps.version.outputs.PREVIOUS_TAG }}
     steps:
       - name: Checkout code
@@ -58,18 +59,44 @@ jobs:
 
       - name: Determine release version
         id: version
-        run: python scripts/prepare_release.py --requested-version "${{ inputs.version }}"
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: python scripts/workflow/prepare_release.py --requested-version "$REQUESTED_VERSION"
 
-  build:
+  release_branch:
     needs: [test, prepare]
     runs-on: ubuntu-latest
+    outputs:
+      RELEASE_UPDATE_BRANCH: ${{ steps.release_branch.outputs.RELEASE_UPDATE_BRANCH }}
+      RELEASE_COMMIT_SHA: ${{ steps.release_branch.outputs.RELEASE_COMMIT_SHA }}
     env:
       VERSION: ${{ needs.prepare.outputs.VERSION }}
+      NEXT_DEV_VERSION: ${{ needs.prepare.outputs.NEXT_DEV_VERSION }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           ref: ${{ env.RELEASE_BRANCH }}
+          fetch-depth: 0
+
+      - name: Prepare release branch
+        id: release_branch
+        run: >
+          python scripts/workflow/prepare_release_branch.py
+          --version "${{ env.VERSION }}"
+          --next-dev-version "${{ env.NEXT_DEV_VERSION }}"
+
+  build:
+    needs: [test, prepare, release_branch]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.VERSION }}
+      RELEASE_COMMIT_SHA: ${{ needs.release_branch.outputs.RELEASE_COMMIT_SHA }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_COMMIT_SHA }}
 
       - name: Set up Python 3.11
         uses: actions/setup-python@v5
@@ -81,9 +108,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install build
 
-      - name: Set package version for artifact
-        run: python scripts/set_package_version.py "${{ env.VERSION }}"
-
       - name: Build distribution
         run: python -m build
 
@@ -94,17 +118,18 @@ jobs:
           path: dist/*
 
   publish:
-    needs: [test, prepare, build]
+    needs: [test, prepare, release_branch, build]
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.prepare.outputs.VERSION }}
       PREVIOUS_TAG: ${{ needs.prepare.outputs.PREVIOUS_TAG }}
+      RELEASE_COMMIT_SHA: ${{ needs.release_branch.outputs.RELEASE_COMMIT_SHA }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          ref: ${{ env.RELEASE_BRANCH }}
+          ref: ${{ env.RELEASE_COMMIT_SHA }}
           fetch-depth: 0
 
       - name: Download artifacts
@@ -115,7 +140,7 @@ jobs:
 
       - name: Generate release notes
         run: >
-          python scripts/generate_release_notes.py
+          python scripts/workflow/generate_release_notes.py
           --version "${{ env.VERSION }}"
           --previous-tag "${{ env.PREVIOUS_TAG }}"
 
@@ -128,13 +153,15 @@ jobs:
           tag_name: ${{ env.VERSION }}
           name: GamesTheory ${{ env.VERSION }}
           body_path: release-notes.md
-          target_commitish: ${{ env.RELEASE_BRANCH }}
+          target_commitish: ${{ env.RELEASE_COMMIT_SHA }}
 
   version_update:
-    needs: [prepare, publish]
+    needs: [prepare, release_branch, publish]
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.prepare.outputs.VERSION }}
+      NEXT_DEV_VERSION: ${{ needs.prepare.outputs.NEXT_DEV_VERSION }}
+      RELEASE_UPDATE_BRANCH: ${{ needs.release_branch.outputs.RELEASE_UPDATE_BRANCH }}
       GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout code
@@ -143,11 +170,10 @@ jobs:
           ref: ${{ env.RELEASE_BRANCH }}
           fetch-depth: 0
 
-      - name: Set package version
-        run: python scripts/set_package_version.py "${{ env.VERSION }}"
-
       - name: Create version update pull request
         run: >
-          python scripts/create_version_update_pr.py
+          python scripts/workflow/create_version_update_pr.py
           --version "${{ env.VERSION }}"
+          --next-dev-version "${{ env.NEXT_DEV_VERSION }}"
           --base "${{ env.RELEASE_BRANCH }}"
+          --head "${{ env.RELEASE_UPDATE_BRANCH }}"

@@ -12,11 +12,13 @@ import tempfile
 from pathlib import Path
 
 
-ROOT = Path(__file__).resolve().parents[1]
-PREPARE = ROOT / "scripts" / "prepare_release.py"
-SET_VERSION = ROOT / "scripts" / "set_package_version.py"
-NOTES = ROOT / "scripts" / "generate_release_notes.py"
-CREATE_PR = ROOT / "scripts" / "create_version_update_pr.py"
+ROOT = Path(__file__).resolve().parents[2]
+WORKFLOW_SCRIPTS = ROOT / "scripts" / "workflow"
+PREPARE = WORKFLOW_SCRIPTS / "prepare_release.py"
+PREPARE_BRANCH = WORKFLOW_SCRIPTS / "prepare_release_branch.py"
+SET_VERSION = WORKFLOW_SCRIPTS / "set_package_version.py"
+NOTES = WORKFLOW_SCRIPTS / "generate_release_notes.py"
+CREATE_PR = WORKFLOW_SCRIPTS / "create_version_update_pr.py"
 WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
 
 
@@ -72,7 +74,18 @@ def test_prepare_release() -> None:
 
         output = repo / "outputs.txt"
         run(["python3", str(PREPARE), "--output-file", str(output)], repo)
-        assert "VERSION=0.0.1" in output.read_text(encoding="utf-8")
+        content = output.read_text(encoding="utf-8")
+        assert "VERSION=0.0.1" in content
+        assert "NEXT_DEV_VERSION=0.0.2.dev0" in content
+
+        repo_dev = Path(tmp) / "repo-dev"
+        repo_dev.mkdir()
+        init_repo(repo_dev, version="0.4.2.dev0")
+        dev_output = repo_dev / "outputs.txt"
+        run(["python3", str(PREPARE), "--output-file", str(dev_output)], repo_dev)
+        dev_content = dev_output.read_text(encoding="utf-8")
+        assert "VERSION=0.4.2" in dev_content
+        assert "NEXT_DEV_VERSION=0.4.3.dev0" in dev_content
 
         run(["python3", str(SET_VERSION), "1.2.3"], repo)
         run(["git", "add", "pyproject.toml"], repo)
@@ -83,6 +96,7 @@ def test_prepare_release() -> None:
         run(["python3", str(PREPARE), "--output-file", str(output)], repo)
         content = output.read_text(encoding="utf-8")
         assert "VERSION=1.2.4" in content
+        assert "NEXT_DEV_VERSION=1.2.5.dev0" in content
         assert "PREVIOUS_TAG=1.2.3" in content
 
         output.write_text("", encoding="utf-8")
@@ -97,7 +111,9 @@ def test_prepare_release() -> None:
             ],
             repo,
         )
-        assert "VERSION=2.0.0" in output.read_text(encoding="utf-8")
+        content = output.read_text(encoding="utf-8")
+        assert "VERSION=2.0.0" in content
+        assert "NEXT_DEV_VERSION=2.0.1.dev0" in content
 
         duplicate = run(
             ["python3", str(PREPARE), "--requested-version", "1.2.3"],
@@ -146,6 +162,89 @@ def test_prepare_release_uses_branch_local_previous_tag() -> None:
         content = output.read_text(encoding="utf-8")
         assert "VERSION=1.4.1" in content
         assert "PREVIOUS_TAG=1.4.0" in content
+
+
+def test_prepare_release_rejects_branch_local_downgrade() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        repo.mkdir()
+        init_repo(repo)
+
+        run(["python3", str(SET_VERSION), "1.5.1"], repo)
+        run(["git", "add", "pyproject.toml"], repo)
+        run(["git", "commit", "-m", "chore: set 1.5.1"], repo)
+        run(["git", "tag", "1.5.1"], repo)
+
+        run(["git", "checkout", "-b", "release-1"], repo)
+        run(["git", "checkout", "-b", "mainline"], repo)
+        run(["python3", str(SET_VERSION), "2.0.0"], repo)
+        run(["git", "add", "pyproject.toml"], repo)
+        run(["git", "commit", "-m", "chore: set 2.0.0"], repo)
+        run(["git", "tag", "2.0.0"], repo)
+        run(["git", "checkout", "release-1"], repo)
+
+        rejected = run(
+            ["python3", str(PREPARE), "--requested-version", "1.4.2"],
+            repo,
+            check=False,
+        )
+        assert rejected.returncode != 0
+        assert "must be greater than latest reachable tag 1.5.1" in rejected.stderr
+
+        output = repo / "outputs.txt"
+        run(
+            [
+                "python3",
+                str(PREPARE),
+                "--requested-version",
+                "1.5.2",
+                "--output-file",
+                str(output),
+            ],
+            repo,
+        )
+        content = output.read_text(encoding="utf-8")
+        assert "VERSION=1.5.2" in content
+        assert "PREVIOUS_TAG=1.5.1" in content
+
+
+def test_prepare_release_branch() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        repo = Path(tmp) / "repo"
+        repo.mkdir()
+        init_repo(repo, version="1.4.0.dev0")
+
+        output = repo / "outputs.txt"
+        run(
+            [
+                "python3",
+                str(PREPARE_BRANCH),
+                "--version",
+                "1.4.0",
+                "--next-dev-version",
+                "1.4.1.dev0",
+                "--output-file",
+                str(output),
+                "--skip-push",
+            ],
+            repo,
+        )
+
+        content = output.read_text(encoding="utf-8")
+        assert "RELEASE_UPDATE_BRANCH=release-1.4.0" in content
+        release_sha = next(
+            line.split("=", 1)[1]
+            for line in content.splitlines()
+            if line.startswith("RELEASE_COMMIT_SHA=")
+        )
+        release_tree = run(
+            ["git", "show", f"{release_sha}:pyproject.toml"],
+            repo,
+        ).stdout
+        head_tree = run(["git", "show", "HEAD:pyproject.toml"], repo).stdout
+        assert 'version = "1.4.0"' in release_tree
+        assert 'version = "1.4.1.dev0"' in head_tree
+        assert run(["git", "rev-list", "--count", "HEAD"], repo).stdout.strip() == "3"
 
 
 def test_generate_release_notes() -> None:
@@ -303,13 +402,28 @@ def test_first_release_filters_prs_to_head_history() -> None:
         assert [pr.number for pr in prs] == [1]
 
 
-def test_version_update_pr_noop() -> None:
+def test_version_update_pr_rejects_invalid_version() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         repo = Path(tmp) / "repo"
         repo.mkdir()
         init_repo(repo)
-        result = run(["python3", str(CREATE_PR), "--version", "0.0.0"], repo)
-        assert "No version update changes to publish." in result.stdout
+        result = run(
+            [
+                "python3",
+                str(CREATE_PR),
+                "--version",
+                "0.0.0.dev0",
+                "--next-dev-version",
+                "0.0.1.dev0",
+                "--base",
+                "master",
+                "--head",
+                "release-0.0.0",
+            ],
+            repo,
+            check=False,
+        )
+        assert result.returncode != 0
 
 
 def test_workflow_yaml() -> None:
@@ -324,20 +438,28 @@ def test_workflow_yaml() -> None:
 
 def test_release_workflow_branch_input() -> None:
     content = WORKFLOW.read_text(encoding="utf-8")
-    assert "release_branch:" not in content
+    assert 'description: "Branch to release from' not in content
     assert "RELEASE_BRANCH: ${{ github.ref_name }}" in content
+    assert "REQUESTED_VERSION: ${{ inputs.version }}" in content
+    assert "NEXT_DEV_VERSION: ${{ steps.version.outputs.NEXT_DEV_VERSION }}" in content
+    assert "release_branch:" in content
+    assert "RELEASE_COMMIT_SHA: ${{ steps.release_branch.outputs.RELEASE_COMMIT_SHA }}" in content
     assert "ref: ${{ env.RELEASE_BRANCH }}" in content
-    assert "target_commitish: ${{ env.RELEASE_BRANCH }}" in content
+    assert "ref: ${{ env.RELEASE_COMMIT_SHA }}" in content
+    assert "target_commitish: ${{ env.RELEASE_COMMIT_SHA }}" in content
     assert '--base "${{ env.RELEASE_BRANCH }}"' in content
+    assert '--head "${{ env.RELEASE_UPDATE_BRANCH }}"' in content
 
 
 def main() -> int:
     test_prepare_release()
     test_prepare_release_uses_branch_local_previous_tag()
+    test_prepare_release_rejects_branch_local_downgrade()
+    test_prepare_release_branch()
     test_generate_release_notes()
     test_paginated_pull_request_payload()
     test_first_release_filters_prs_to_head_history()
-    test_version_update_pr_noop()
+    test_version_update_pr_rejects_invalid_version()
     test_workflow_yaml()
     test_release_workflow_branch_input()
     print("release tooling tests OK")
