@@ -2,21 +2,32 @@ name: release
 
 on:
   workflow_dispatch:
+    inputs:
+      version:
+        description: "Release version. Leave empty to use the next patch version."
+        required: false
+        type: string
+
+env:
+  RELEASE_BRANCH: ${{ github.ref_name }}
+
+permissions:
+  contents: write
+  pull-requests: write
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_BRANCH }}
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-
-      - name: Check current directory
-        run: ls -la
+          python-version: "3.11"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -33,37 +44,71 @@ jobs:
           CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
         run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Python -r coverage.xml
 
-  build:
-    needs: test
+  prepare:
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
     outputs:
-      VERSION: ${{ steps.get_version.outputs.VERSION }}
+      VERSION: ${{ steps.version.outputs.VERSION }}
+      NEXT_DEV_VERSION: ${{ steps.version.outputs.NEXT_DEV_VERSION }}
+      PREVIOUS_TAG: ${{ steps.version.outputs.PREVIOUS_TAG }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_BRANCH }}
+          fetch-depth: 0
+
+      - name: Determine release version
+        id: version
+        env:
+          REQUESTED_VERSION: ${{ inputs.version }}
+        run: python scripts/workflow/prepare_release.py --requested-version "$REQUESTED_VERSION"
+
+  release_branch:
+    needs: [test, prepare]
+    runs-on: ubuntu-latest
+    outputs:
+      RELEASE_UPDATE_BRANCH: ${{ steps.release_branch.outputs.RELEASE_UPDATE_BRANCH }}
+      RELEASE_COMMIT_SHA: ${{ steps.release_branch.outputs.RELEASE_COMMIT_SHA }}
+    env:
+      VERSION: ${{ needs.prepare.outputs.VERSION }}
+      NEXT_DEV_VERSION: ${{ needs.prepare.outputs.NEXT_DEV_VERSION }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_BRANCH }}
+          fetch-depth: 0
+
+      - name: Prepare release branch
+        id: release_branch
+        run: >
+          python scripts/workflow/prepare_release_branch.py
+          --version "${{ env.VERSION }}"
+          --next-dev-version "${{ env.NEXT_DEV_VERSION }}"
+
+  build:
+    needs: [test, prepare, release_branch]
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ needs.prepare.outputs.VERSION }}
+      RELEASE_COMMIT_SHA: ${{ needs.release_branch.outputs.RELEASE_COMMIT_SHA }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.RELEASE_COMMIT_SHA }}
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
-
-      - name: Check current directory
-        run: ls -la
+          python-version: "3.11"
 
       - name: Install build tooling
         run: |
           python -m pip install --upgrade pip
           python -m pip install build
 
-      - name: Bump version for build
-        run: python games_theory/version_bump.py bump
-
-      - name: Get version
-        id: get_version
-        run: echo "VERSION=$(python games_theory/version_bump.py version)" >> $GITHUB_OUTPUT
-
-      - name: Build distribution (wheel and sdist)
+      - name: Build distribution
         run: python -m build
 
       - name: Upload artifacts
@@ -73,19 +118,19 @@ jobs:
           path: dist/*
 
   publish:
-    needs: [test, build]
+    needs: [test, prepare, release_branch, build]
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
     env:
-      VERSION: ${{ needs.build.outputs.VERSION }}
+      VERSION: ${{ needs.prepare.outputs.VERSION }}
+      PREVIOUS_TAG: ${{ needs.prepare.outputs.PREVIOUS_TAG }}
+      RELEASE_COMMIT_SHA: ${{ needs.release_branch.outputs.RELEASE_COMMIT_SHA }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/checkout@v4
         with:
-          python-version: '3.x'
+          ref: ${{ env.RELEASE_COMMIT_SHA }}
+          fetch-depth: 0
 
       - name: Download artifacts
         uses: actions/download-artifact@v4
@@ -93,62 +138,42 @@ jobs:
           name: dist
           path: build/dist
 
-      - name: Check current directory
-        run: ls -la && ls -la build/dist
+      - name: Generate release notes
+        run: >
+          python scripts/workflow/generate_release_notes.py
+          --version "${{ env.VERSION }}"
+          --previous-tag "${{ env.PREVIOUS_TAG }}"
 
-      - name: Generate Changelog
-        id: changelog
-        run: ./games_theory/generate_changelog.sh ${{ env.VERSION }}
-
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - name: Create release
+        uses: softprops/action-gh-release@v2
         with:
           files: |
             build/dist/*.whl
             build/dist/*.tar.gz
           tag_name: ${{ env.VERSION }}
-          body: ${{ env.CHANGELOG }}
+          name: GamesTheory ${{ env.VERSION }}
+          body_path: release-notes.md
+          target_commitish: ${{ env.RELEASE_COMMIT_SHA }}
 
-  version_bump:
-    needs: [test, build, publish]
+  version_update:
+    needs: [prepare, release_branch, publish]
     runs-on: ubuntu-latest
-    if: github.event_name == 'workflow_dispatch'
     env:
-      VERSION: ${{ needs.build.outputs.VERSION }}
+      VERSION: ${{ needs.prepare.outputs.VERSION }}
+      NEXT_DEV_VERSION: ${{ needs.prepare.outputs.NEXT_DEV_VERSION }}
+      RELEASE_UPDATE_BRANCH: ${{ needs.release_branch.outputs.RELEASE_UPDATE_BRANCH }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/checkout@v4
         with:
-          python-version: '3.x'
+          ref: ${{ env.RELEASE_BRANCH }}
+          fetch-depth: 0
 
-      - name: Bump version
-        run: python games_theory/version_bump.py bump
-
-      - name: Git config
-        run: |
-          git config user.email "ci@dude.com"
-          git config user.name "CIDude"
-
-      - name: Create branch for version bump
-        run: |
-          BRANCH_NAME="version-bump-${{ env.VERSION }}"
-          git checkout -b "$BRANCH_NAME"
-          git add .
-          git commit -m "artifact version bump to ${{ env.VERSION }}"
-          git push -u origin "$BRANCH_NAME"
-
-      - name: Create PR and enable auto-merge
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          BRANCH_NAME="version-bump-${{ env.VERSION }}"
-          gh pr create --title "Artifact version bump to ${{ env.VERSION }}" \
-                       --body "Automated artifact version bump after release ${{ env.VERSION }}" \
-                       --base master \
-                       --head "$BRANCH_NAME" \
-                       --label "automated,version-bump" \
-                       --repo ${{ github.repository }}
-          gh pr merge "$BRANCH_NAME" --auto --merge --repo ${{ github.repository }}
+      - name: Create version update pull request
+        run: >
+          python scripts/workflow/create_version_update_pr.py
+          --version "${{ env.VERSION }}"
+          --next-dev-version "${{ env.NEXT_DEV_VERSION }}"
+          --base "${{ env.RELEASE_BRANCH }}"
+          --head "${{ env.RELEASE_UPDATE_BRANCH }}"

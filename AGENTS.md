@@ -12,8 +12,9 @@ This file orchestrates agent work in the repository. Use it first, then open the
 | Domain documentation | `docs/domain/**` | Read before changing business language, game rules, persistence meaning, or DDD boundaries. |
 | Engineering guidelines | `docs/guidelines/**` | Read before refactors, service extraction, persistence changes, review work, or documentation changes. |
 | Architecture and integrations | `docs/architecture/**` | Read before changing runtime flow, integrations, CLI orchestration, or predictor/control-flow design. |
-| Project plans | `docs/projects/**` | Read or create a temporary plan before every non-trivial implementation change; delete completed plans after implementation and tests. |
-| Automation scripts | `scripts/**` | Store repeatable process automation and agent verification scripts here. |
+| Research notes | `docs/research/**` | Read before revisiting tool choices, third-party automation, or previously researched alternatives. |
+| Project plans | `docs/projects/**` | Read or create a temporary plan before every non-trivial implementation change; wait for user confirmation or feedback before implementation; wait again for implementation/test acceptance before cleanup; delete completed plans after user review, implementation, tests, and durable documentation updates. |
+| Automation scripts | `scripts/**` | Store repeatable process automation and agent verification scripts here; GitHub Actions Python helpers live in `scripts/workflow/**`. |
 | Repository guide | `docs/guidelines/repository-guide.md` | Read for repository setup, module map, workflows, tests, and release process. |
 | Experimental sandboxes | `NN/`, `knn/`, `TF/`, `scratch/`, `data/` | Read local code, `docs/domain/ml-sandbox-domain.md`, and `docs/guidelines/repository-guide.md` experiment notes unless the change crosses production boundaries. |
 
@@ -44,9 +45,10 @@ Notes:
 - **Changing runtime flow, CLI orchestration, integration points, or predictor loop:** read `docs/architecture/**` first, especially `docs/architecture/qlearning_algorithm.puml`.
 - **Changing `games_theory/**`:** also read `docs/guidelines/production-package.md`.
 - **Changing setup, scripts, tests, packaging, or release process:** read `docs/guidelines/repository-guide.md`.
-- **Making a non-trivial change:** create or update a temporary plan under `docs/projects/**` before implementation, then delete it after tests pass and durable docs/TODOs are updated.
+- **Making a non-trivial change:** create or update a temporary plan under `docs/projects/**`, share it with the user, and wait for confirmation or feedback before implementation. After implementation and tests, share the result and wait for user acceptance before deleting the plan, removing temporary files, or moving final notes into durable docs.
 - **Adding repeatable verification or process automation:** add or update a script under `scripts/**`.
 - **Reviewing code:** use the delivery workflow, review checklist, and relevant guideline docs for touched paths.
+- **Documenting changes:** every change must be documented in the location selected from the repository map. Prefer a focused Markdown file in the relevant `docs/**` subdirectory over adding unrelated details to an existing catch-all document.
 
 ---
 
@@ -55,9 +57,11 @@ Notes:
 Every non-trivial change follows the same sequence:
 
 1. **Planning**: write or update a short plan in `docs/projects/**` with scope, implementation steps, and verification commands.
-2. **Implementation**: apply the planned changes with the smallest coherent code/docs/script diff.
-3. **Tests**: run repeatable verification, preferably through `scripts/**`.
-4. **Closeout**: move durable outcomes and TODOs into the relevant docs, then delete the completed project plan.
+2. **Review Gate**: share the plan with the user and wait for confirmation or requested changes before implementation.
+3. **Implementation**: apply the planned changes with the smallest coherent code/docs/script diff.
+4. **Tests**: run repeatable verification, preferably through `scripts/**`.
+5. **Acceptance Gate**: share the implementation and test results with the user, then wait for acceptance or requested changes.
+6. **Closeout**: move durable outcomes and TODOs into the relevant docs, remove temporary files, then delete the completed project plan.
 
 For small one-line fixes, an in-message plan is enough, but the same order still applies: plan first, implement second, test last.
 

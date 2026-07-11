@@ -11,7 +11,7 @@ This guide contains operational repository information for maintainers and agent
 - Production package guidelines: `docs/guidelines/production-package.md`
 - Architecture diagrams: `docs/architecture/`
 - Project planning workflow: `docs/projects/project-planning.md`
-- Changelog and release scripts: `games_theory/changelog`, `games_theory/generate_changelog.sh`, `games_theory/version_bump.py`
+- Release workflow: `docs/guidelines/release-workflow.md`
 
 ## Repository Map
 
@@ -21,6 +21,7 @@ This guide contains operational repository information for maintainers and agent
 | `docs/domain/` | Documentation | DDD-oriented bounded contexts, ubiquitous language, and domain rules split by domain. |
 | `docs/guidelines/` | Documentation | Engineering rules, anti-patterns, repository guide, and documentation standards. |
 | `docs/architecture/` | Documentation | Integration and control-flow diagrams. |
+| `docs/research/` | Documentation | Research notes for tool choices, release automation alternatives, and third-party workflow options. |
 | `docs/projects/` | Documentation | Temporary active project plans and the project planning workflow. |
 | `scripts/` | Tooling | Repeatable local automation and agent verification scripts. |
 | `NN/` | Experiment | Classical perceptron and feed-forward NN utilities used by `nn_main.py`. |
@@ -90,14 +91,12 @@ This guide contains operational repository information for maintainers and agent
 - `games_theory/test/src/test_generator.py`: verifies canonical neighbour generation for bot moves.
 - `games_theory/test/src/test_state_encoder.py`: verifies `X/O/N` to `-1/0/1` normalization relative to `ai-char`.
 - `games_theory/test/resources/`: verifies resource copy/save helpers.
-- `games_theory/test/test_generate_changelog.sh`: smoke test for changelog generation.
 
 ### Release Workflow
 
-1. Update changelog entries in `games_theory/changelog`.
-2. Run `python games_theory/version_bump.py bump` or `python games_theory/version_bump.py version`.
-3. Build artifacts via `flit build` when release work is in scope.
-4. Use `generate_changelog.sh $VERSION` in CI to push notes into `$GITHUB_ENV`.
+Releases are manual GitHub Actions runs from GitHub's built-in branch selector. Long-lived branches store the next development version in `pyproject.toml` using PEP 440 `.dev0`; leave the optional `version` input empty to release that clean base version, or enter an explicit `X.Y.Z` version to override it. The workflow builds artifacts and tags the clean release-version commit, generates structured release notes from merged pull requests since the previous semver tag, and opens a post-release pull request that moves the selected branch to the next patch `.dev0` version. Release helper scripts and deterministic release tooling tests live in `scripts/workflow/`.
+
+See `docs/guidelines/release-workflow.md` for version selection, release-note grouping, and verification details.
 
 ## Experiment Sandboxes
 
@@ -111,6 +110,7 @@ This guide contains operational repository information for maintainers and agent
 
 - `requirements.txt`: consolidated dependency list for experiments and tooling.
 - `chess_runtime.sh`: helper script for chess-oriented experiments; inspect parameters before running.
+- `scripts/workflow/`: Python helpers used by GitHub Actions release automation and their deterministic checks.
 - `scripts/verify.sh`: repeatable agent verification: compile production code, run unit tests, and check diff whitespace.
 - `scripts/tictactoe_rebuild.sh`: reinstall package locally and optionally reset tic-tac-toe resources; pass `--reset` as the second argument for non-interactive reset.
 - `scripts/tictactoe_run.sh`: run a tic-tac-toe CLI smoke command against generated resources.
