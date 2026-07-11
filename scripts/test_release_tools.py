@@ -140,6 +140,7 @@ def test_generate_release_notes() -> None:
                     {
                         "number": 13,
                         "title": "docs: update release guide",
+                        "url": "https://api.github.com/repos/example/repo/pulls/13",
                         "html_url": "https://github.com/example/repo/pull/13",
                         "user": {"login": "carol"},
                         "merged_at": "2026-01-04T00:00:00Z",

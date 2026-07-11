@@ -89,7 +89,7 @@ def load_paginated_payload(payload: str) -> list[dict[str, Any]]:
 
 
 def pull_request_url(item: dict[str, Any]) -> str:
-    return str(item.get("url") or item.get("html_url") or "")
+    return str(item.get("html_url") or item.get("url") or "")
 
 
 def pull_request_author(item: dict[str, Any]) -> str:
