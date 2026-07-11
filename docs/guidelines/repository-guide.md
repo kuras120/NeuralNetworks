@@ -21,6 +21,7 @@ This guide contains operational repository information for maintainers and agent
 | `docs/domain/` | Documentation | DDD-oriented bounded contexts, ubiquitous language, and domain rules split by domain. |
 | `docs/guidelines/` | Documentation | Engineering rules, anti-patterns, repository guide, and documentation standards. |
 | `docs/architecture/` | Documentation | Integration and control-flow diagrams. |
+| `docs/research/` | Documentation | Research notes for tool choices, release automation alternatives, and third-party workflow options. |
 | `docs/projects/` | Documentation | Temporary active project plans and the project planning workflow. |
 | `scripts/` | Tooling | Repeatable local automation and agent verification scripts. |
 | `NN/` | Experiment | Classical perceptron and feed-forward NN utilities used by `nn_main.py`. |

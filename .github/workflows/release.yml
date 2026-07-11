@@ -105,7 +105,10 @@ jobs:
           path: build/dist
 
       - name: Generate release notes
-        run: python scripts/generate_release_notes.py --version "${{ env.VERSION }}" --previous-tag "${{ env.PREVIOUS_TAG }}"
+        run: >
+          python scripts/generate_release_notes.py
+          --version "${{ env.VERSION }}"
+          --previous-tag "${{ env.PREVIOUS_TAG }}"
 
       - name: Create release
         uses: softprops/action-gh-release@v2

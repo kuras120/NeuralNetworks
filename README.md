@@ -8,7 +8,7 @@ The main practical target today is a reusable Q-learning backend for games like 
 
 - `games_theory/`: installable Python package with CLI tools, resource management, and a Q-learning predictor loop.
 - `NN/`, `knn/`, `TF/`, `scratch/`: experimental sandboxes for neural networks, k-NN, TensorFlow checks, and quick prototypes.
-- `docs/`: domain notes, engineering guidelines, architecture diagrams, and project planning workflow.
+- `docs/`: domain notes, engineering guidelines, architecture diagrams, research notes, and project planning workflow.
 - `scripts/`: repeatable local automation and verification scripts.
 
 ## Documentation
@@ -19,6 +19,7 @@ The main practical target today is a reusable Q-learning backend for games like 
 - Engineering guidelines: [`docs/guidelines/engineering-guidelines.md`](docs/guidelines/engineering-guidelines.md)
 - Production package guidelines: [`docs/guidelines/production-package.md`](docs/guidelines/production-package.md)
 - Architecture diagrams: [`docs/architecture/`](docs/architecture/)
+- Research notes: [`docs/research/`](docs/research/)
 - Project planning workflow: [`docs/projects/project-planning.md`](docs/projects/project-planning.md)
 - Agent workflow: [`AGENTS.md`](AGENTS.md)
 

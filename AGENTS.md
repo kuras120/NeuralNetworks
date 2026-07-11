@@ -12,6 +12,7 @@ This file orchestrates agent work in the repository. Use it first, then open the
 | Domain documentation | `docs/domain/**` | Read before changing business language, game rules, persistence meaning, or DDD boundaries. |
 | Engineering guidelines | `docs/guidelines/**` | Read before refactors, service extraction, persistence changes, review work, or documentation changes. |
 | Architecture and integrations | `docs/architecture/**` | Read before changing runtime flow, integrations, CLI orchestration, or predictor/control-flow design. |
+| Research notes | `docs/research/**` | Read before revisiting tool choices, third-party automation, or previously researched alternatives. |
 | Project plans | `docs/projects/**` | Read or create a temporary plan before every non-trivial implementation change; wait for user confirmation or feedback before implementation; wait again for implementation/test acceptance before cleanup; delete completed plans after user review, implementation, tests, and durable documentation updates. |
 | Automation scripts | `scripts/**` | Store repeatable process automation and agent verification scripts here. |
 | Repository guide | `docs/guidelines/repository-guide.md` | Read for repository setup, module map, workflows, tests, and release process. |

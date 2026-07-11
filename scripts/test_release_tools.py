@@ -3,9 +3,11 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import os
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 
@@ -18,6 +20,19 @@ CREATE_PR = ROOT / "scripts" / "create_version_update_pr.py"
 WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
 
 
+def load_release_notes_module():
+    spec = importlib.util.spec_from_file_location("generate_release_notes", NOTES)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Cannot load generate_release_notes.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+GENERATE_RELEASE_NOTES = load_release_notes_module()
+
+
 def run(
     command: list[str],
     cwd: Path,
@@ -27,14 +42,24 @@ def run(
     merged_env = os.environ.copy()
     if env:
         merged_env.update(env)
-    return subprocess.run(command, cwd=cwd, env=merged_env, text=True, capture_output=True, check=check)
+    return subprocess.run(
+        command,
+        cwd=cwd,
+        env=merged_env,
+        text=True,
+        capture_output=True,
+        check=check,
+    )
 
 
 def init_repo(path: Path, version: str = "0.0.0") -> None:
     run(["git", "init"], path)
     run(["git", "config", "user.name", "Test User"], path)
     run(["git", "config", "user.email", "test@example.com"], path)
-    (path / "pyproject.toml").write_text(f'[project]\nname = "x"\nversion = "{version}"\n', encoding="utf-8")
+    (path / "pyproject.toml").write_text(
+        f'[project]\nname = "x"\nversion = "{version}"\n',
+        encoding="utf-8",
+    )
     run(["git", "add", "pyproject.toml"], path)
     run(["git", "commit", "-m", "docs: initial"], path)
 
@@ -61,10 +86,24 @@ def test_prepare_release() -> None:
         assert "PREVIOUS_TAG=1.2.3" in content
 
         output.write_text("", encoding="utf-8")
-        run(["python3", str(PREPARE), "--requested-version", "2.0.0", "--output-file", str(output)], repo)
+        run(
+            [
+                "python3",
+                str(PREPARE),
+                "--requested-version",
+                "2.0.0",
+                "--output-file",
+                str(output),
+            ],
+            repo,
+        )
         assert "VERSION=2.0.0" in output.read_text(encoding="utf-8")
 
-        duplicate = run(["python3", str(PREPARE), "--requested-version", "1.2.3"], repo, check=False)
+        duplicate = run(
+            ["python3", str(PREPARE), "--requested-version", "1.2.3"],
+            repo,
+            check=False,
+        )
         assert duplicate.returncode != 0
 
 
@@ -101,28 +140,70 @@ def test_generate_release_notes() -> None:
                     {
                         "number": 13,
                         "title": "docs: update release guide",
-                        "url": "https://github.com/example/repo/pull/13",
-                        "author": {"login": "carol"},
-                        "mergedAt": "2026-01-04T00:00:00Z",
+                        "html_url": "https://github.com/example/repo/pull/13",
+                        "user": {"login": "carol"},
+                        "merged_at": "2026-01-04T00:00:00Z",
+                        "merge_commit_sha": "cccccccccccccccccccccccccccccccccccccccc",
                     },
                 ]
             ),
             encoding="utf-8",
         )
         output = workdir / "release-notes.md"
-        run(["python3", str(NOTES), "--version", "1.2.4", "--fixture", str(fixture), "--output", str(output)], workdir)
+        run(
+            [
+                "python3",
+                str(NOTES),
+                "--version",
+                "1.2.4",
+                "--fixture",
+                str(fixture),
+                "--output",
+                str(output),
+            ],
+            workdir,
+        )
         body = output.read_text(encoding="utf-8")
         assert "# GamesTheory 1.2.4" in body
         assert "### 🚀 Features" in body
-        assert "- feat: add release flow ([#10](https://github.com/example/repo/pull/10), [aaaaaaa](https://github.com/example/repo/commit/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa))" in body
+        assert (
+            "- feat: add release flow "
+            "([#10](https://github.com/example/repo/pull/10), "
+            "[aaaaaaa](https://github.com/example/repo/commit/"
+            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa))"
+        ) in body
         assert "### 🐛 Bug fixes" in body
-        assert "- fix(release): render PR links ([#11](https://github.com/example/repo/pull/11), [bbbbbbb](https://github.com/example/repo/commit/bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb))" in body
-        assert "- bugfix: repair release notes ([#12](https://github.com/example/repo/pull/12))" in body
+        assert (
+            "- fix(release): render PR links "
+            "([#11](https://github.com/example/repo/pull/11), "
+            "[bbbbbbb](https://github.com/example/repo/commit/"
+            "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb))"
+        ) in body
+        assert (
+            "- bugfix: repair release notes "
+            "([#12](https://github.com/example/repo/pull/12))"
+        ) in body
         assert "### 🧰 Others" in body
-        assert "- docs: update release guide ([#13](https://github.com/example/repo/pull/13))" in body
+        assert (
+            "- docs: update release guide "
+            "([#13](https://github.com/example/repo/pull/13), "
+            "[ccccccc](https://github.com/example/repo/commit/"
+            "cccccccccccccccccccccccccccccccccccccccc))"
+        ) in body
         assert body.count("- @alice") == 1
         assert "- @bob" in body
         assert "- @carol" in body
+
+
+def test_paginated_pull_request_payload() -> None:
+    payload = json.dumps(
+        [
+            [{"number": 1, "title": "feat: one"}],
+            [{"number": 2, "title": "fix: two"}],
+        ]
+    )
+    flattened = GENERATE_RELEASE_NOTES.load_paginated_payload(payload)
+    assert [item["number"] for item in flattened] == [1, 2]
 
 
 def test_version_update_pr_noop() -> None:
@@ -135,7 +216,11 @@ def test_version_update_pr_noop() -> None:
 
 
 def test_workflow_yaml() -> None:
-    result = run(["ruby", "-e", f'require "yaml"; YAML.load_file("{WORKFLOW}")'], ROOT, check=False)
+    result = run(
+        ["ruby", "-e", f'require "yaml"; YAML.load_file("{WORKFLOW}")'],
+        ROOT,
+        check=False,
+    )
     if result.returncode != 0:
         raise AssertionError(result.stderr or result.stdout)
 
@@ -143,6 +228,7 @@ def test_workflow_yaml() -> None:
 def main() -> int:
     test_prepare_release()
     test_generate_release_notes()
+    test_paginated_pull_request_payload()
     test_version_update_pr_noop()
     test_workflow_yaml()
     print("release tooling tests OK")

@@ -47,44 +47,80 @@ def load_pull_requests_from_fixture(path: str) -> list[PullRequest]:
 
 def load_pull_requests_from_github(previous_tag: str) -> list[PullRequest]:
     base_sha, head_sha = release_range(previous_tag)
+    repository = os.environ["GITHUB_REPOSITORY"]
     payload = run(
         [
             "gh",
-            "pr",
-            "list",
-            "--state",
-            "merged",
-            "--json",
-            "number,title,url,author,mergedAt,mergeCommit",
-            "--limit",
-            "100",
+            "api",
+            "--method",
+            "GET",
+            "--paginate",
+            f"repos/{repository}/pulls",
+            "-f",
+            "state=closed",
+            "-f",
+            "sort=updated",
+            "-f",
+            "direction=desc",
+            "-f",
+            "per_page=100",
+            "--slurp",
         ]
     )
-    prs = parse_pull_requests(json.loads(payload))
+    prs = parse_pull_requests(load_paginated_payload(payload))
     if not base_sha:
-        return prs
+        return [pr for pr in prs if pr.merged_at]
 
     commits = set(run(["git", "rev-list", f"{base_sha}..{head_sha}"]).splitlines())
     return [
         pr
         for pr in prs
-        if pr.merge_commit and pr.merge_commit in commits
+        if pr.merged_at and pr.merge_commit and pr.merge_commit in commits
     ]
+
+
+def load_paginated_payload(payload: str) -> list[dict[str, Any]]:
+    pages = json.loads(payload)
+    if not pages:
+        return []
+    if isinstance(pages[0], dict):
+        return pages
+    return [item for page in pages for item in page]
+
+
+def pull_request_url(item: dict[str, Any]) -> str:
+    return str(item.get("url") or item.get("html_url") or "")
+
+
+def pull_request_author(item: dict[str, Any]) -> str:
+    author = item.get("author") or item.get("user") or {}
+    if isinstance(author, dict):
+        return str(author.get("login") or item.get("authorLogin") or "unknown")
+    return str(author or item.get("authorLogin") or "unknown")
+
+
+def pull_request_merge_commit(item: dict[str, Any]) -> str:
+    merge_commit = item.get("mergeCommit") or {}
+    if isinstance(merge_commit, dict):
+        return str(
+            merge_commit.get("oid")
+            or item.get("merge_commit_sha")
+            or item.get("mergeCommitOid")
+            or ""
+        )
+    return str(item.get("merge_commit_sha") or item.get("mergeCommitOid") or "")
 
 
 def parse_pull_requests(data: list[dict[str, Any]]) -> list[PullRequest]:
     pull_requests: list[PullRequest] = []
     for item in data:
-        author = item.get("author") or {}
-        login = author.get("login") or item.get("authorLogin") or item.get("author") or "unknown"
-        merge_commit = item.get("mergeCommit") or {}
         pr = PullRequest(
             number=int(item["number"]),
             title=str(item["title"]).strip(),
-            url=str(item["url"]),
-            author=str(login),
+            url=pull_request_url(item),
+            author=pull_request_author(item),
             merged_at=str(item.get("mergedAt") or item.get("merged_at") or ""),
-            merge_commit=str(merge_commit.get("oid") or item.get("mergeCommitOid") or ""),
+            merge_commit=pull_request_merge_commit(item),
         )
         pull_requests.append(pr)
     return sorted(pull_requests, key=lambda pr: pr.merged_at)
@@ -152,11 +188,21 @@ def generate_notes(version: str, pull_requests: list[PullRequest]) -> str:
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Generate release notes from merged pull requests.")
+    parser = argparse.ArgumentParser(
+        description="Generate release notes from merged pull requests."
+    )
     parser.add_argument("--version", required=True, help="Release version.")
     parser.add_argument("--previous-tag", default="", help="Previous release tag.")
-    parser.add_argument("--output", default="release-notes.md", help="Output Markdown file.")
-    parser.add_argument("--fixture", default="", help="Optional JSON fixture for deterministic tests.")
+    parser.add_argument(
+        "--output",
+        default="release-notes.md",
+        help="Output Markdown file.",
+    )
+    parser.add_argument(
+        "--fixture",
+        default="",
+        help="Optional JSON fixture for deterministic tests.",
+    )
     return parser.parse_args()
 
 
