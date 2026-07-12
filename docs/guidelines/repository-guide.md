@@ -58,7 +58,7 @@ This guide contains operational repository information for maintainers and agent
 ### Interfaces And Workflows
 
 - `games-theory-init [path] [--overwrite] [--generate-internals]`: copies packaged defaults into `<path>/data/`, writes `resource_path`, and optionally regenerates derived files.
-- `games-theory <player_points> <ai_points> <cells...> [--config DIR]`: validates board length, loads config/resources, prints the state, and triggers the predictor loop.
+- `games-theory <player_points> <ai_points> <cells...> [--config DIR]`: validates board length, loads config/resources, triggers the predictor loop, and writes the selected move as `{"x": <column>, "y": <row>}` to standard output (`null` when no legal move exists). Coordinates are zero-based from the top-left; diagnostics are written to standard error.
 - `games_theory/resources/resource.py`: owns `Resource.load/save`, `copy_defaults`, `generate_qtable_file`, and `generate_state_file`.
 - `games_theory/src/default_predictor.py`: orchestrates evaluation and action selection.
 - `games_theory/src/config_repository.py`: loads typed game configuration for the CLI/process boundary.
@@ -67,6 +67,7 @@ This guide contains operational repository information for maintainers and agent
 - `games_theory/src/predictor/state_repository.py`: owns `state.json` reads/writes for pending moves.
 - `games_theory/src/predictor/qtable_repository.py`: owns `qtable.json` reads/writes and lazy neighbour registration.
 - `games_theory/src/generator.py`: enumerates bot moves for canonical board states.
+- `games_theory/src/move_coordinate.py`: validates a selected transition and maps its changed row-major cell to the public `{x, y}` coordinate.
 
 ### Configuration And Data Assets
 
@@ -83,13 +84,15 @@ This guide contains operational repository information for maintainers and agent
 2. Normalize incoming board into canonical `-1/0/1`; persistent state is accessed through `StateRepository` and `QTableRepository`.
 3. Reward the previous move, if recorded, using delta advantage and discounted best-future reward.
 4. Enumerate neighbours with `Generator.generate_neighbour_states` and choose the next move with weighted randomness.
-5. Persist updated Q-table and state snapshot for subsequent invocations. See `docs/architecture/qlearning_algorithm.puml`.
+5. Convert the selected neighbour state's changed cell to a zero-based move coordinate and emit it as JSON.
+6. Persist updated Q-table and state snapshot for subsequent invocations. See `docs/architecture/qlearning_algorithm.puml`.
 
 ### Testing
 
 - `games_theory/test/src/test_default_predictor.py`: verifies pending-move persistence and the Q-update rule.
 - `games_theory/test/src/test_generator.py`: verifies canonical neighbour generation for bot moves.
 - `games_theory/test/src/test_state_encoder.py`: verifies `X/O/N` to `-1/0/1` normalization relative to `ai-char`.
+- `games_theory/test/src/test_move_coordinate.py`: verifies legal transition validation and row-major state-to-coordinate conversion.
 - `games_theory/test/resources/`: verifies resource copy/save helpers.
 
 ### Release Workflow

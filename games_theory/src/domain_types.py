@@ -8,6 +8,12 @@ NormalizedPoints = List[str]
 StateValues = Dict[State, float]
 QTable = Dict[State, StateValues]
 
+
+class MoveCoordinate(TypedDict):
+    x: int
+    y: int
+
+
 GameConfig = TypedDict(
     'GameConfig',
     {
