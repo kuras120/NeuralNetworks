@@ -1,9 +1,9 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="800" viewBox="0 0 960 800" role="img" aria-labelledby="title desc">
   <title id="title">GamesTheory release notes draft</title>
-  <desc id="desc">Mockup of the GamesTheory release notes layout with artifact title, version heading, and grouped pull request sections.</desc>
+  <desc id="desc">Mockup of the GamesTheory release notes layout with a bare version title and grouped pull request sections.</desc>
   <rect width="960" height="800" fill="#f6f8fa"/>
   <rect x="120" y="72" width="720" height="656" rx="8" fill="#ffffff" stroke="#d0d7de"/>
-  <text x="160" y="136" font-family="Arial, Helvetica, sans-serif" font-size="36" font-weight="700" fill="#24292f">GamesTheory 0.3.0</text>
+  <text x="160" y="136" font-family="Arial, Helvetica, sans-serif" font-size="36" font-weight="700" fill="#24292f">0.3.0</text>
   <line x1="160" y1="166" x2="800" y2="166" stroke="#d0d7de"/>
 
   <text x="160" y="218" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700" fill="#24292f">What&apos;s Changed in 0.3.0</text>

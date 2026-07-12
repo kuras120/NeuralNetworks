@@ -52,16 +52,14 @@ Release helper scripts live under `scripts/`:
 The release title is:
 
 ```text
-GamesTheory <version>
+<version>
 ```
 
 Visual draft: `docs/guidelines/release-notes-draft.svg`
 
-The release body starts with the artifact header, then the changes section:
+The release body starts directly with the changes section, avoiding duplication of the version already shown in the release title:
 
 ```markdown
-# GamesTheory <version>
-
 ## What's Changed in <version>
 
 ### 🚀 Features
@@ -89,7 +87,7 @@ Each release-note item links to the pull request. When GitHub provides a `mergeC
 
 The `Authors` section lists unique pull request authors from the same release range.
 
-## Pull Request Title Standard
+## Pull Request And Commit Standard
 
 Pull request titles must use this format because the release workflow categorizes changes from the title of each merged pull request:
 
@@ -125,6 +123,8 @@ Release-note mapping is implemented by `scripts/workflow/generate_release_notes.
 | Any other title | Others |
 
 Prefer the canonical `feat` and `fix` forms for new pull requests. The longer `feature` and `bugfix` aliases remain supported for compatibility with existing titles.
+
+Commit subjects must follow the same `<type>(<optional-scope>): <short summary>` format so repository history and pull request titles remain consistent. Use `feat` for a capability, `fix` for a defect correction, and `chore` for maintenance work that is neither a capability nor a defect correction. Choose the type from the actual purpose of the commit; for example, a correction to release presentation uses `fix(release): ...`. Keep generated release/version commits in the existing `chore(release): ...` form.
 
 ## Verification
 

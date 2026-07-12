@@ -165,8 +165,6 @@ def generate_notes(version: str, pull_requests: list[PullRequest]) -> str:
 
     return "\n".join(
         [
-            f"# GamesTheory {version}",
-            "",
             f"## What's Changed in {version}",
             "",
             "### 🚀 Features",
