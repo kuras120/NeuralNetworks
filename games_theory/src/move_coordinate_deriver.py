@@ -1,19 +1,19 @@
 from typing import List, Tuple
 
-from games_theory.src.domain_types import MoveCoordinatePayload, State
+from games_theory.src.domain_types import MoveCoordinate, State
 
 
-class MoveCoordinate:
+class MoveCoordinateDeriver:
     def __init__(self, board_size: int) -> None:
         if board_size <= 0:
             raise ValueError("Board size must be greater than zero")
         self._board_size = board_size
 
-    def derive(self, current_state: State, selected_state: State) -> MoveCoordinatePayload:
+    def derive(self, current_state: State, selected_state: State) -> MoveCoordinate:
         current_cells, selected_cells = self._validated_cells(current_state, selected_state)
         changed_index = self._changed_index(current_cells, selected_cells)
         self._validate_move(current_cells, selected_cells, changed_index)
-        return self._to_payload(changed_index)
+        return self._to_coordinate(changed_index)
 
     def _validated_cells(
         self,
@@ -47,5 +47,5 @@ class MoveCoordinate:
         if current_cells[index] != '0' or selected_cells[index] != '-1':
             raise ValueError("Selected move must place the bot marker in an empty cell")
 
-    def _to_payload(self, index: int) -> MoveCoordinatePayload:
+    def _to_coordinate(self, index: int) -> MoveCoordinate:
         return {'x': index % self._board_size, 'y': index // self._board_size}

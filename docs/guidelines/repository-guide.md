@@ -67,7 +67,7 @@ This guide contains operational repository information for maintainers and agent
 - `games_theory/src/predictor/state_repository.py`: owns `state.json` reads/writes for pending moves.
 - `games_theory/src/predictor/qtable_repository.py`: owns `qtable.json` reads/writes and lazy neighbour registration.
 - `games_theory/src/generator.py`: enumerates bot moves for canonical board states.
-- `games_theory/src/move_coordinate.py`: provides `MoveCoordinate`, which validates a selected transition and maps its changed row-major cell to the public `{x, y}` coordinate.
+- `games_theory/src/move_coordinate_deriver.py`: provides `MoveCoordinateDeriver`, which validates a selected transition and maps its changed row-major cell to the public `MoveCoordinate` contract.
 
 ### Configuration And Data Assets
 
@@ -92,7 +92,7 @@ This guide contains operational repository information for maintainers and agent
 - `games_theory/test/src/test_default_predictor.py`: verifies pending-move persistence and the Q-update rule.
 - `games_theory/test/src/test_generator.py`: verifies canonical neighbour generation for bot moves.
 - `games_theory/test/src/test_state_encoder.py`: verifies `X/O/N` to `-1/0/1` normalization relative to `ai-char`.
-- `games_theory/test/src/test_move_coordinate.py`: verifies legal transition validation and row-major state-to-coordinate conversion.
+- `games_theory/test/src/test_move_coordinate_deriver.py`: verifies legal transition validation and row-major state-to-coordinate conversion.
 - `games_theory/test/resources/`: verifies resource copy/save helpers.
 
 ### Release Workflow
