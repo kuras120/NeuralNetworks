@@ -67,7 +67,7 @@ This guide contains operational repository information for maintainers and agent
 - `games_theory/src/predictor/state_repository.py`: owns `state.json` reads/writes for pending moves.
 - `games_theory/src/predictor/qtable_repository.py`: owns `qtable.json` reads/writes and lazy neighbour registration.
 - `games_theory/src/generator.py`: enumerates bot moves for canonical board states.
-- `games_theory/src/move_coordinate.py`: validates a selected transition and maps its changed row-major cell to the public `{x, y}` coordinate.
+- `games_theory/src/move_coordinate.py`: provides `MoveCoordinate`, which validates a selected transition and maps its changed row-major cell to the public `{x, y}` coordinate.
 
 ### Configuration And Data Assets
 

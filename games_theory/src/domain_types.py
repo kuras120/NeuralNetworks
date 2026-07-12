@@ -9,7 +9,7 @@ StateValues = Dict[State, float]
 QTable = Dict[State, StateValues]
 
 
-class MoveCoordinate(TypedDict):
+class MoveCoordinatePayload(TypedDict):
     x: int
     y: int
 

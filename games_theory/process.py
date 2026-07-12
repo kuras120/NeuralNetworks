@@ -6,8 +6,8 @@ import jsbeautifier
 
 from games_theory.src.config_repository import ConfigRepository
 from games_theory.src.default_predictor import DefaultPredictor
-from games_theory.src.domain_types import MoveCoordinate, PointValue, QTable
-from games_theory.src.move_coordinate import derive_move_coordinate
+from games_theory.src.domain_types import MoveCoordinatePayload, PointValue, QTable
+from games_theory.src.move_coordinate import MoveCoordinate
 from games_theory.src.predictor import StateEncoder, QTableRepository, StateRepository
 
 
@@ -30,8 +30,9 @@ class Process:
         self.__predictor = DefaultPredictor(resources_path)
         self.__qtable_repository = QTableRepository(resources_path)
         self.__state_repository = StateRepository(resources_path)
+        self.__move_coordinate = MoveCoordinate(length)
 
-    def move(self) -> Optional[MoveCoordinate]:
+    def move(self) -> Optional[MoveCoordinatePayload]:
         if self.__learning:
             self.__predictor.evaluate(self.__state_repository.load(), self.__current_points, self.__hash)
             selected_state = self.__predictor.predict(self.__hash, self.__current_points)
@@ -40,7 +41,7 @@ class Process:
 
         if selected_state is None:
             return None
-        return derive_move_coordinate(self.__hash, selected_state, self.__length)
+        return self.__move_coordinate.derive(self.__hash, selected_state)
 
     def print_values(self) -> None:
         print(self.__format_values(self.__qtable_repository.load()), file=sys.stderr)
