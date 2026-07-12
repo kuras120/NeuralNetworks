@@ -151,7 +151,7 @@ jobs:
             build/dist/*.whl
             build/dist/*.tar.gz
           tag_name: ${{ env.VERSION }}
-          name: GamesTheory ${{ env.VERSION }}
+          name: ${{ env.VERSION }}
           body_path: release-notes.md
           target_commitish: ${{ env.RELEASE_COMMIT_SHA }}
 

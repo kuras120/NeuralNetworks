@@ -8,11 +8,12 @@ This note compares ready-made release automation tools that could replace or red
 - Optional explicit `X.Y.Z` version, with empty input defaulting to the next patch.
 - `pyproject.toml` should be updated to the released version through a pull request.
 - GitHub release body should include:
-  - `GamesTheory <version>` header,
+  - a `What's Changed in <version>` heading without repeating the release title,
   - grouped pull request list based on PR title prefixes,
   - Markdown links to each pull request,
   - authors for pull requests in the release range.
 - Existing tag format is bare semver, for example `0.0.2`, without a `v` prefix.
+- GitHub release titles use the same bare semver as the tag.
 
 ## Options
 

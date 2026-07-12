@@ -341,7 +341,7 @@ def test_generate_release_notes() -> None:
             workdir,
         )
         body = output.read_text(encoding="utf-8")
-        assert "# GamesTheory 1.2.4" in body
+        assert body.startswith("## What's Changed in 1.2.4\n")
         assert "### 🚀 Features" in body
         assert (
             "- feat: add release flow "
@@ -483,6 +483,7 @@ def test_release_workflow_branch_input() -> None:
     assert "ref: ${{ env.RELEASE_BRANCH }}" in content
     assert "ref: ${{ env.RELEASE_COMMIT_SHA }}" in content
     assert "target_commitish: ${{ env.RELEASE_COMMIT_SHA }}" in content
+    assert "name: ${{ env.VERSION }}" in content
     assert '--base "${{ env.RELEASE_BRANCH }}"' in content
     assert '--head "${{ env.RELEASE_UPDATE_BRANCH }}"' in content
 
