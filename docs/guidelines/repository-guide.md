@@ -100,6 +100,7 @@ This guide contains operational repository information for maintainers and agent
 Releases are manual GitHub Actions runs from GitHub's built-in branch selector. Long-lived branches store the next development version in `pyproject.toml` using PEP 440 `.dev0`; leave the optional `version` input empty to release that clean base version, or enter an explicit `X.Y.Z` version to override it. The workflow builds artifacts and tags the clean release-version commit, generates structured release notes from merged pull requests since the previous semver tag, and opens a post-release pull request that moves the selected branch to the next patch `.dev0` version. Release helper scripts and deterministic release tooling tests live in `scripts/workflow/`.
 
 See `docs/guidelines/release-workflow.md` for version selection, release-note grouping, and verification details.
+Pull request titles must follow the standard documented there because their prefixes drive release-note categorization.
 
 ## Experiment Sandboxes
 

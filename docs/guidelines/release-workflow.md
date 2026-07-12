@@ -89,6 +89,43 @@ Each release-note item links to the pull request. When GitHub provides a `mergeC
 
 The `Authors` section lists unique pull request authors from the same release range.
 
+## Pull Request Title Standard
+
+Pull request titles must use this format because the release workflow categorizes changes from the title of each merged pull request:
+
+```text
+<type>(<optional-scope>): <short summary>
+```
+
+Rules:
+
+- Use a lowercase type followed by an optional lowercase scope in parentheses, a colon, one space, and a concise summary.
+- Use `feat` for a user-visible capability and `fix` for a defect correction. These types determine the dedicated release-note categories.
+- Use `docs`, `refactor`, `test`, `chore`, `ci`, `build`, or `perf` when they describe the change more accurately. These types are grouped under `Others` by the current release workflow.
+- Use a stable scope such as `cli`, `predictor`, `resources`, `release`, or `docs` when it makes the affected area clearer; omit it when the change spans the repository.
+- Write the summary in imperative, present-tense English without a trailing period.
+- Make the title describe the complete pull request, not an individual commit.
+- Keep each pull request focused on one release-note category. Split unrelated feature and bug-fix work into separate pull requests.
+
+Examples:
+
+```text
+feat(cli): emit selected move as JSON coordinates
+fix(predictor): preserve pending move after evaluation failure
+docs(release): document pull request title standard
+ci: verify release tooling
+```
+
+Release-note mapping is implemented by `scripts/workflow/generate_release_notes.py`:
+
+| PR title prefix | Release-note category |
+| --- | --- |
+| `feat:`, `feat(scope):`, `feature:`, `feature(scope):` | Features |
+| `fix:`, `fix(scope):`, `bugfix:`, `bugfix(scope):` | Bug fixes |
+| Any other title | Others |
+
+Prefer the canonical `feat` and `fix` forms for new pull requests. The longer `feature` and `bugfix` aliases remain supported for compatibility with existing titles.
+
 ## Verification
 
 Local verification can confirm the package still builds and the repository tests pass:
