@@ -1,15 +1,15 @@
 import copy
 import time
-from NN.NnCore import NnCore
-from KNN.DataPreparation import DataPreparation
+from nn.nn_core import NnCore
+from knn.data_preparation import DataPreparation
 
 
 class TestRunner:
     @staticmethod
-    def test(weights, sample):
-        nn = NnCore(0.001)
-        neuron_map = nn.create_network([2, 1], weights)
-        return nn.test(neuron_map, sample)
+    def test(sample):
+        nn = NnCore(0.001, 2)
+        neuron_map = nn.create_network([2, 1])
+        return nn.learn_and_test(neuron_map, sample, [], 1) # TODO check it
 
     @staticmethod
     def run(samples_number, r_seed=None):
@@ -19,7 +19,7 @@ class TestRunner:
         learn_data, learn_labels = generator.create_learn_data()
         test_data, test_labels = generator.create_test_data()
 
-        nn = NnCore(0.001)
+        nn = NnCore(0.001, 2)
         neuron_map = nn.create_network([2, 1])
 
         # ******************************* TESTS ******************************* #
@@ -38,13 +38,13 @@ class TestRunner:
         neuron_best_state = None
 
         while errors[0] > 0.05 and time.time() - start_time < 30:
-            output, error, error_rate, std_dev = nn.learn(neuron_map, learn_data, learn_labels, True)
+            output, error, error_rate, std_dev = nn.learn_and_test(neuron_map, learn_data, learn_labels, True)
             if error < errors[0]:
                 errors[0] = error
                 std_devs[0] = std_dev
                 neuron_learn_state = copy.deepcopy(output)
                 # print('Error: ', error, 'Error rate: ', error_rate.__str__() + '%')
-                output_test, error_test, error_test_rate, std_test_dev = nn.learn(neuron_map, test_data, test_labels)
+                output_test, error_test, error_test_rate, std_test_dev = nn.learn_and_test(neuron_map, test_data, test_labels, 1, False)
                 rates = [error_rate, error_test_rate]
                 errors[1] = error_test
                 std_devs[1] = std_test_dev
