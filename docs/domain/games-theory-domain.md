@@ -13,6 +13,7 @@ This file describes the production game-theory domain from a DDD perspective. Us
 - **Board state**: flattened board passed by the caller in row-major order using external symbols (`X`, `O`, `N`).
 - **Canonical state**: internal bot-relative state where `-1 = bot`, `1 = opponent`, and `0 = empty`.
 - **Neighbour state**: legal next canonical state generated from the current state by placing the bot marker.
+- **Move coordinate**: zero-based `{x, y}` location of the bot marker added by the selected neighbour state; `(0, 0)` is the top-left cell, `x` increases rightward, and `y` increases downward.
 - **Q-table**: persisted transition-quality map keyed by canonical state, then by candidate next state.
 - **Last move**: pending transition saved after a bot move and consumed on the next invocation after the opponent move.
 - **Reward**: delta of bot advantage between the previous pending move and the current observed state.
@@ -23,3 +24,4 @@ This file describes the production game-theory domain from a DDD perspective. Us
 - Q-learning data must stay independent from the external bot symbol whenever possible, so changing `ai-char` does not require relearning from scratch.
 - `state.json` stores only pending transition data; `qtable.json` stores learned transition quality.
 - Resource format changes are production changes and require tests plus documentation updates.
+- The CLI writes exactly one machine-readable JSON result to standard output: a move coordinate object or `null` when no legal move exists. Human-readable diagnostics belong on standard error.

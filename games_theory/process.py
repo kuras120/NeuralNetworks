@@ -1,12 +1,13 @@
-import sys
 import json
-from typing import List, Sequence
+import sys
+from typing import List, Optional, Sequence
 
 import jsbeautifier
 
 from games_theory.src.config_repository import ConfigRepository
 from games_theory.src.default_predictor import DefaultPredictor
-from games_theory.src.domain_types import PointValue, QTable
+from games_theory.src.domain_types import MoveCoordinate, PointValue, QTable
+from games_theory.src.move_coordinate_deriver import MoveCoordinateDeriver
 from games_theory.src.predictor import StateEncoder, QTableRepository, StateRepository
 
 
@@ -29,13 +30,18 @@ class Process:
         self.__predictor = DefaultPredictor(resources_path)
         self.__qtable_repository = QTableRepository(resources_path)
         self.__state_repository = StateRepository(resources_path)
+        self.__move_coordinate_deriver = MoveCoordinateDeriver(length)
 
-    def move(self) -> None:
+    def move(self) -> Optional[MoveCoordinate]:
         if self.__learning:
             self.__predictor.evaluate(self.__state_repository.load(), self.__current_points, self.__hash)
-            self.__predictor.predict(self.__hash, self.__current_points)
+            selected_state = self.__predictor.predict(self.__hash, self.__current_points)
         else:
-            self.__predictor.predict_readonly(self.__hash)
+            selected_state = self.__predictor.predict_readonly(self.__hash)
+
+        if selected_state is None:
+            return None
+        return self.__move_coordinate_deriver.derive(self.__hash, selected_state)
 
     def print_values(self) -> None:
         print(self.__format_values(self.__qtable_repository.load()), file=sys.stderr)
@@ -106,5 +112,6 @@ def cli_main() -> None:
         learning=conf['learning'],
         ai_char=conf['ai-char'],
     )
-    process.move()
+    move_coordinate = process.move()
+    print(json.dumps(move_coordinate))
     process.print_values()

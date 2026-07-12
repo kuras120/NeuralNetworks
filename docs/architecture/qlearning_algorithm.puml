@@ -21,6 +21,8 @@ while (game continues?) is (yes)
     :Enumerate legal actions A for S\n(using Generator → neighbour states);
     :Select next action A*\n- weight actions by stored Q(S, a)\n- fallback to uniform random if all equal;
     :Persist chosen transition\n(store {S, A*, points} as last_move);
+    :Derive zero-based {x, y}\nfrom the changed row-major cell;
+    :Emit move coordinate as JSON\n(or null when no action exists);
     :Apply action in environment → obtain new board + updated points;
     :Set S_prev ← S, S ← next state;
 endwhile (no)
