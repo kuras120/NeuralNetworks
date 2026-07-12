@@ -132,8 +132,6 @@ Local verification can confirm the package still builds and the repository tests
 
 ```bash
 scripts/verify.sh
-python scripts/workflow/test_release_tools.py
-python -m build
 ```
 
 The release itself must still be verified in GitHub Actions because GitHub supplies the manual input, repository tags, artifacts, and release permissions.

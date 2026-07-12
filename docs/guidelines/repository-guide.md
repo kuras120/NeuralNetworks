@@ -115,7 +115,7 @@ Pull request titles and commit subjects must follow the conventional format docu
 - `requirements.txt`: consolidated dependency list for experiments and tooling.
 - `chess_runtime.sh`: helper script for chess-oriented experiments; inspect parameters before running.
 - `scripts/workflow/`: Python helpers used by GitHub Actions release automation and their deterministic checks.
-- `scripts/verify.sh`: repeatable agent verification: compile production code, run unit tests, and check diff whitespace.
+- `scripts/verify.sh`: repeatable agent verification: compile production code, run unit, release tooling tests and build package artifacts.
 - `scripts/tictactoe_rebuild.sh`: reinstall package locally and optionally reset tic-tac-toe resources; pass `--reset` as the second argument for non-interactive reset.
 - `scripts/tictactoe_run.sh`: run a tic-tac-toe CLI smoke command against generated resources.
 - `dist/`: output of `flit build`; clean if artifacts become stale.
