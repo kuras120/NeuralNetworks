@@ -7,27 +7,27 @@ This guide contains operational repository information for maintainers and agent
 - Agent routing and review policy: `AGENTS.md`
 - Game-theory domain notes: `docs/domain/games-theory-domain.md`
 - ML sandbox domain notes: `docs/domain/ml-sandbox-domain.md`
-- Engineering guidelines: `docs/guidelines/engineering-guidelines.md`
-- Production package guidelines: `docs/guidelines/production-package.md`
+- Engineering guide: `docs/guidelines/engineering-guide.md`
+- Production package guide: `docs/guidelines/production-package-guide.md`
 - Architecture diagrams: `docs/architecture/`
-- Project planning workflow: `docs/projects/project-planning.md`
+- Project lifecycle workflow: `docs/guidelines/project-lifecycle.md`
 - Release workflow: `docs/guidelines/release-workflow.md`
 
 ## Repository Map
 
-| Path | Category | Notes |
-| --- | --- | --- |
-| `games_theory/` | Production package | CLI entry points, predictors, resource helpers, tests, release tooling. |
-| `docs/domain/` | Documentation | DDD-oriented bounded contexts, ubiquitous language, and domain rules split by domain. |
-| `docs/guidelines/` | Documentation | Engineering rules, anti-patterns, repository guide, and documentation standards. |
-| `docs/architecture/` | Documentation | Integration and control-flow diagrams. |
-| `docs/research/` | Documentation | Research notes for tool choices, release automation alternatives, and third-party workflow options. |
-| `docs/projects/` | Documentation | Temporary active project plans and the project planning workflow. |
-| `scripts/` | Tooling | Repeatable local automation and agent verification scripts. |
-| `NN/` | Experiment | Classical perceptron and feed-forward NN utilities used by `nn_main.py`. |
-| `knn/` | Experiment | NumPy-based `KnnCore`, charting, and dataset helpers used by `knn_main.py`. |
-| `TF/` | Experiment | TensorFlow prototypes (`gpu_test.py`, `neural_network.py`). |
-| `scratch/` | Experiment | Throwaway explorations for quick algorithm checks. |
+| Path                 | Category           | Notes                                                                                               |
+|----------------------|--------------------|-----------------------------------------------------------------------------------------------------|
+| `games_theory/`      | Production package | CLI entry points, predictors, resource helpers, tests, release tooling.                             |
+| `docs/domain/`       | Documentation      | DDD-oriented bounded contexts, ubiquitous language, and domain rules split by domain.               |
+| `docs/guidelines/`   | Documentation      | Engineering rules, anti-patterns, repository guide, and documentation standards.                    |
+| `docs/architecture/` | Documentation      | Integration and control-flow diagrams.                                                              |
+| `docs/research/`     | Documentation      | Research notes for tool choices, release automation alternatives, and third-party workflow options. |
+| `docs/projects/`     | Documentation      | Temporary active project plans governed by the project lifecycle.                                   |
+| `scripts/`           | Tooling            | Repeatable local automation and agent verification scripts.                                         |
+| `NN/`                | Experiment         | Classical perceptron and feed-forward NN utilities used by `nn_main.py`.                            |
+| `knn/`               | Experiment         | NumPy-based `KnnCore`, charting, and dataset helpers used by `knn_main.py`.                         |
+| `TF/`                | Experiment         | TensorFlow prototypes (`gpu_test.py`, `neural_network.py`).                                         |
+| `scratch/`           | Experiment         | Throwaway explorations for quick algorithm checks.                                                  |
 
 ## Environment And Setup
 
@@ -120,6 +120,8 @@ Pull request titles and commit subjects must follow the conventional format docu
 - `scripts/tictactoe_run.sh`: run a tic-tac-toe CLI smoke command against generated resources.
 - `dist/`: output of `flit build`; clean if artifacts become stale.
 
+Repeatable workflows, smoke tests, and agent verification belong under `scripts/**`. Keep Bash scripts deterministic and shell-safe with `set -euo pipefail`. Document user-facing scripts here or in the root `README.md`; GitHub Actions Python helpers belong under `scripts/workflow/**`.
+
 ## Quality Reference
 
 - Follow `AGENTS.md` for agent routing and review policy.
@@ -128,3 +130,4 @@ Pull request titles and commit subjects must follow the conventional format docu
 - Keep repeatable automation in `scripts/`.
 - Production work in `games_theory/**` demands API stability, packaging fidelity, and adequate tests.
 - Experimental directories focus on correctness and learning value.
+- Treat changes to `config.json`, `state.json`, and `qtable.json` formats as production changes even when they are made through tooling or documentation work.
