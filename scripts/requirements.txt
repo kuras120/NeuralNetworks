@@ -1,0 +1,2 @@
+-r ../games_theory/requirements.txt
+build

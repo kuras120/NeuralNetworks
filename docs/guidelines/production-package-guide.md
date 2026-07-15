@@ -1,13 +1,13 @@
-# Production Package Guidelines
+# Production Package Guide
 
 Use these checks when touching `games_theory/**`. They replace the old module-local agent briefing; root `AGENTS.md` remains the only agent briefing entry point.
 
 ## Scope And Priorities
 
-| Area | Paths | Expectations |
-| --- | --- | --- |
-| Production package | `games_theory/**` | Maintain installability via Flit, stable public APIs, CLI behaviour (`games-theory`, `games-theory-init`), resource/config compatibility, persistence correctness, and regression tests. |
-| Shared resources | `games_theory/resources/**`, `games_theory/test/**` | Treat as part of the production surface; ensure packaged defaults are valid and tests cover new functionality. |
+| Area               | Paths                                               | Expectations                                                                                                                                                                             |
+|--------------------|-----------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| Production package | `games_theory/**`                                   | Maintain installability via Flit, stable public APIs, CLI behaviour (`games-theory`, `games-theory-init`), resource/config compatibility, persistence correctness, and regression tests. |
+| Shared resources   | `games_theory/resources/**`, `games_theory/test/**` | Treat as part of the production surface; ensure packaged defaults are valid and tests cover new functionality.                                                                           |
 
 Notes:
 - The package may be published independently; avoid repo-relative assumptions in package runtime code.
@@ -15,8 +15,7 @@ Notes:
 
 ## Packaging And Release Checklist
 
-- `pyproject.toml` matches the current entry points, dependencies, and supported Python version.
-- `games_theory/__init__.py` version changes are paired with changelog updates when preparing releases.
+- `pyproject.toml` matches the current version, entry points, dependencies, and supported Python version.
 - `flit build` or `pip install .` succeeds without missing package files/resources when release work is in scope.
 
 ## Runtime And CLI Checklist
