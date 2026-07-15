@@ -30,7 +30,7 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r games_theory/requirements.txt
 
       - name: Run unittests
         run: coverage run -m unittest discover games_theory

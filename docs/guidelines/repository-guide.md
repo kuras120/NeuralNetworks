@@ -24,7 +24,7 @@ This guide contains operational repository information for maintainers and agent
 | `docs/research/`     | Documentation      | Research notes for tool choices, release automation alternatives, and third-party workflow options. |
 | `docs/projects/`     | Documentation      | Temporary active project plans governed by the project lifecycle.                                   |
 | `scripts/`           | Tooling            | Repeatable local automation and agent verification scripts.                                         |
-| `NN/`                | Experiment         | Classical perceptron and feed-forward NN utilities used by `nn_main.py`.                            |
+| `nn/`                | Experiment         | Classical perceptron and feed-forward NN utilities used by `nn/nn_main.py`.                         |
 | `knn/`               | Experiment         | NumPy-based `KnnCore`, charting, and dataset helpers used by `knn_main.py`.                         |
 | `TF/`                | Experiment         | TensorFlow prototypes (`gpu_test.py`, `neural_network.py`).                                         |
 | `scratch/`           | Experiment         | Throwaway explorations for quick algorithm checks.                                                  |
@@ -32,14 +32,15 @@ This guide contains operational repository information for maintainers and agent
 ## Environment And Setup
 
 1. **Python**: 3.9+ per `pyproject.toml`.
-2. **Install lab dependencies** for experiments and tooling:
+2. **Install the production package in editable mode** for CLI work:
    ```bash
    python -m venv .venv && source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
-3. **Install the production package in editable mode** for CLI testing:
-   ```bash
    pip install -e .
+   ```
+3. **Install production verification dependencies** before running the complete repository check:
+   ```bash
+   pip install -r scripts/requirements.txt
+   scripts/verify.sh
    ```
 4. **Smoke test CLIs**:
    ```bash
@@ -104,15 +105,18 @@ Pull request titles and commit subjects must follow the conventional format docu
 
 ## Experiment Sandboxes
 
-- `NN/`: `Perceptron`, `NnCore`, and associated tests; invoked by `nn_main.py`.
+- `nn/`: `Perceptron`, `NnCore`, and associated tests; invoked by `nn/nn_main.py`.
 - `knn/`: distance calculation, neighbor voting, harmonic weighting; exercised via `knn_main.py`.
 - `TF/`: TensorFlow GPU validation and prototype network definitions.
 - `scratch/`: quick experiments such as line separation scripts and logic gate demos.
+- Install only the selected sandbox dependencies with `pip install -r <area>/requirements.txt`, where `<area>` is `nn`, `knn`, `TF`, or `scratch`.
 - Testing expectation: prioritize correctness and learning value; production packaging rigor is not required unless the change crosses production boundaries.
 
 ## Tooling And Scripts
 
-- `requirements.txt`: consolidated dependency list for experiments and tooling.
+- `games_theory/requirements.txt`: production runtime compatibility and test coverage dependencies; `pyproject.toml` remains authoritative for installed package runtime dependencies.
+- `scripts/requirements.txt`: complete production-verification environment, including `games_theory/requirements.txt` and package build tooling.
+- `nn/requirements.txt`, `knn/requirements.txt`, `TF/requirements.txt`, `scratch/requirements.txt`: sandbox-specific dependencies derived from each area's imports.
 - `chess_runtime.sh`: helper script for chess-oriented experiments; inspect parameters before running.
 - `scripts/workflow/`: Python helpers used by GitHub Actions release automation and their deterministic checks.
 - `scripts/verify.sh`: repeatable agent verification: compile production code, run unit, release tooling tests and build package artifacts.

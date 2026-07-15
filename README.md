@@ -7,7 +7,7 @@ The main practical target today is a reusable Q-learning backend for games like 
 ## What Is Inside
 
 - `games_theory/`: installable Python package with CLI tools, resource management, and a Q-learning predictor loop.
-- `NN/`, `knn/`, `TF/`, `scratch/`: experimental sandboxes for neural networks, k-NN, TensorFlow checks, and quick prototypes.
+- `nn/`, `knn/`, `TF/`, `scratch/`: experimental sandboxes for neural networks, k-NN, TensorFlow checks, and quick prototypes.
 
 ## Documentation
 
@@ -17,7 +17,6 @@ The main practical target today is a reusable Q-learning backend for games like 
 
 ```bash
 python -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
 ./scripts/tictactoe_rebuild.sh ./demo --reset
 ./scripts/tictactoe_run.sh ./demo
 ```

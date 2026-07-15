@@ -18,7 +18,7 @@ Use this file first to identify the required repository context. Read every docu
 | Game rules, state semantics, Q-learning meaning, or domain naming    | `docs/domain/games-theory-domain.md`                                                                                                  |
 | Persistence, resource formats, service boundaries, or predictor flow | `docs/domain/games-theory-domain.md`, `docs/guidelines/production-package-guide.md`, and `docs/architecture/qlearning_algorithm.puml` |
 | CLI orchestration or integration flow                                | Relevant `docs/architecture/**` diagrams and `docs/guidelines/production-package-guide.md`                                            |
-| `NN/`, `knn/`, `TF/`, `scratch/`, or `data/`                         | `docs/domain/ml-sandbox-domain.md` and the experiment guidance in `docs/guidelines/repository-guide.md`                               |
+| `nn/`, `knn/`, `TF/`, `scratch/`, or `data/`                         | `docs/domain/ml-sandbox-domain.md` and the experiment guidance in `docs/guidelines/repository-guide.md`                               |
 | Setup, tests, packaging, repository scripts, or release work         | Relevant sections of `docs/guidelines/repository-guide.md`; for releases also read `docs/guidelines/release-workflow.md`              |
 | Tool selection or previously researched automation                   | Relevant `docs/research/**` notes                                                                                                     |
 | Documentation, review, or refactoring                                | Relevant standards in `docs/guidelines/engineering-guide.md` plus the guide for the touched area                                      |

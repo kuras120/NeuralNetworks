@@ -6,7 +6,7 @@ This file describes the exploratory machine-learning sandbox domain. Use it befo
 
 | Context | Code paths | Responsibility |
 | --- | --- | --- |
-| Neural Network Experiments | `NN/**`, `nn_main.py` | Prototype perceptron and feed-forward neural-network behaviour. |
+| Neural Network Experiments | `nn/**`, `nn/nn_main.py` | Prototype perceptron and feed-forward neural-network behaviour. |
 | k-NN Experiments | `knn/**`, `knn_main.py` | Explore distance metrics, neighbor voting, weighting, and charting. |
 | TensorFlow Prototypes | `TF/**` | Validate TensorFlow/GPU setup and prototype network definitions. |
 | Scratch Space | `scratch/**`, `data/**` | Hold quick checks, sample data, and disposable algorithm explorations. |
