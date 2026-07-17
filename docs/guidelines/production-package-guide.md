@@ -17,6 +17,7 @@ Notes:
 
 - `pyproject.toml` matches the current version, entry points, dependencies, and supported Python version.
 - `flit build` or `pip install .` succeeds without missing package files/resources when release work is in scope.
+- A release dependency lock is generated from the built wheel metadata, contains the complete hashed runtime dependency closure, and installs successfully before the release is published.
 
 ## Runtime And CLI Checklist
 

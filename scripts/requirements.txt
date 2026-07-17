@@ -1,2 +1,4 @@
 -r ../games_theory/requirements.txt
 build
+# Provides pip-compile for resolving the transitive, hashed release lockfile.
+pip-tools==7.5.3
