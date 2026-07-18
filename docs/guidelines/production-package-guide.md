@@ -1,21 +1,17 @@
 # Production Package Guide
 
-Use these checks when touching `games_theory/**`. They replace the old module-local agent briefing; root `AGENTS.md` remains the only agent briefing entry point.
+This guide defines the production quality standard for the `games-theory` package.
 
 ## Scope And Priorities
 
-| Area               | Paths                                               | Expectations                                                                                                                                                                             |
-|--------------------|-----------------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| Production package | `games_theory/**`                                   | Maintain installability via Flit, stable public APIs, CLI behaviour (`games-theory`, `games-theory-init`), resource/config compatibility, persistence correctness, and regression tests. |
-| Shared resources   | `games_theory/resources/**`, `games_theory/test/**` | Treat as part of the production surface; ensure packaged defaults are valid and tests cover new functionality.                                                                           |
-
-Notes:
-- The package may be published independently; avoid repo-relative assumptions in package runtime code.
-- Resource formats must remain backward-compatible unless migration scripts and tests are provided.
+- The installable package, CLI entry points, packaged defaults, persistence formats, and public Python interfaces form one production surface.
+- The package may be published independently and must not depend on the repository checkout at runtime.
+- Public interfaces and resource formats remain backward-compatible unless an explicit migration path and regression coverage are provided.
+- Packaged defaults must be valid, internally consistent, and safe to copy into a new environment.
 
 ## Packaging And Release Checklist
 
-- `pyproject.toml` matches the current version, entry points, dependencies, and supported Python version.
+- Package metadata matches the current version, entry points, runtime dependencies, and supported Python version.
 - `flit build` or `pip install .` succeeds without missing package files/resources when release work is in scope.
 - A release dependency lock is generated from the built wheel metadata, contains the complete hashed runtime dependency closure, and installs successfully before the release is published.
 
@@ -27,11 +23,12 @@ Notes:
 
 ## Predictor And Persistence Checklist
 
-- Changes to `DefaultPredictor`, `Generator`, repositories, or predictor policies preserve state compatibility and include tests.
-- `qtable.json` and `state.json` changes are documented in `docs/domain/games-theory-domain.md` and covered by tests.
-- Architecture docs are updated when predictor/control flow changes materially.
+- Predictor, generator, repository, and policy changes preserve state compatibility and include regression coverage.
+- `qtable.json` and `state.json` changes preserve their domain meaning or provide an explicit migration.
+- Predictor and persistence failures must not leave user resources silently corrupted or partially reset.
 
 ## Test Checklist
 
-- Unit tests under `games_theory/test/**` are updated for production logic changes.
-- CLI or integration smoke tests are scripted under `scripts/**` when they become repeatable verification steps.
+- Unit tests cover changed production logic, public contracts, and failure handling.
+- CLI and integration smoke checks cover installability, packaged resources, initialization, and prediction output.
+- The complete verification workflow must build the package from its declared metadata rather than relying only on editable imports.

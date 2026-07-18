@@ -1,5 +1,5 @@
 @startuml
-' High-level Q-learning loop (as implemented by Process + DefaultPredictor)
+' One games-theory CLI invocation
 
 skinparam activity {
     BackgroundColor #fdfdfd
@@ -7,27 +7,42 @@ skinparam activity {
 }
 
 start
-:Initialize environment\n- load config (board-size, learning flag)\n- ensure qtable/state files exist;
-:Observe current board state S;
+:Parse CLI input and load configuration;
+:Validate board length and normalize\nX/O/N cells into canonical state S;
+:Load qtable.json and state.json;
 
-while (game continues?) is (yes)
-    if (previous move exists?) then (yes)
-    :Compute reward R\n = advantage(current points) - advantage(previous points);
-    :Update Q(S_prev, A_prev)\nQ ← Q + α*(R + γ*max_a' Q(S, a') - Q)\nwhere α=learning rate, γ=discount;
+if (learning enabled?) then (yes)
+    if (pending last_move exists?) then (yes)
+        :Compute reward R\n= current advantage - previous advantage;
+        :Update Q(S_prev, A_prev)\nQ ← Q + α*(R + γ*max_a' Q(S, a') - Q);
+        :Persist Q-table and clear last_move;
     else (no)
-        :Skip update (no prior transition);
+        :Skip the deferred update;
     endif
 
-    :Enumerate legal actions A for S\n(using Generator → neighbour states);
-    :Select next action A*\n- weight actions by stored Q(S, a)\n- fallback to uniform random if all equal;
-    :Persist chosen transition\n(store {S, A*, points} as last_move);
-    :Derive zero-based {x, y}\nfrom the changed row-major cell;
-    :Emit move coordinate as JSON\n(or null when no action exists);
-    :Apply action in environment → obtain new board + updated points;
-    :Set S_prev ← S, S ← next state;
-endwhile (no)
+    :Ensure legal neighbour states for S\nexist in the Q-table;
+    :Select A* using stored Q-values\nand weighted randomness;
 
-:Persist final snapshot (qtable + state);
+    if (legal action selected?) then (yes)
+        :Persist {S, A*, points, advantage}\nas last_move;
+    else (no)
+        :Persist last_move = null;
+    endif
+    :Persist updated Q-table;
+else (no)
+    :Read known neighbours from the Q-table\nor generate legal neighbours in memory;
+    :Select A* without modifying state or Q-table;
+endif
+
+if (legal action selected?) then (yes)
+    :Validate the state transition;
+    :Derive zero-based {x, y}\nfrom the changed row-major cell;
+    :Emit {x, y} as JSON;
+else (no)
+    :Emit null as JSON;
+endif
+
+:Write diagnostics to standard error;
 stop
 
 @enduml

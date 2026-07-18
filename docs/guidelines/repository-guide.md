@@ -1,33 +1,6 @@
 # Repository Guide
 
-This guide contains operational repository information for maintainers and agents. The root `README.md` is intentionally short and visitor-oriented; use this file for setup, module maps, workflows, testing, and release details.
-
-## Quick Links
-
-- Agent routing and review policy: `AGENTS.md`
-- Game-theory domain notes: `docs/domain/games-theory-domain.md`
-- ML sandbox domain notes: `docs/domain/ml-sandbox-domain.md`
-- Engineering guide: `docs/guidelines/engineering-guide.md`
-- Production package guide: `docs/guidelines/production-package-guide.md`
-- Architecture diagrams: `docs/architecture/`
-- Project lifecycle workflow: `docs/guidelines/project-lifecycle.md`
-- Release workflow: `docs/guidelines/release-workflow.md`
-
-## Repository Map
-
-| Path                 | Category           | Notes                                                                                               |
-|----------------------|--------------------|-----------------------------------------------------------------------------------------------------|
-| `games_theory/`      | Production package | CLI entry points, predictors, resource helpers, tests, release tooling.                             |
-| `docs/domain/`       | Documentation      | DDD-oriented bounded contexts, ubiquitous language, and domain rules split by domain.               |
-| `docs/guidelines/`   | Documentation      | Engineering rules, anti-patterns, repository guide, and documentation standards.                    |
-| `docs/architecture/` | Documentation      | Integration and control-flow diagrams.                                                              |
-| `docs/research/`     | Documentation      | Research notes for tool choices, release automation alternatives, and third-party workflow options. |
-| `docs/projects/`     | Documentation      | Temporary active project plans governed by the project lifecycle.                                   |
-| `scripts/`           | Tooling            | Repeatable local automation and agent verification scripts.                                         |
-| `nn/`                | Experiment         | Classical perceptron and feed-forward NN utilities used by `nn/nn_main.py`.                         |
-| `knn/`               | Experiment         | NumPy-based `KnnCore`, charting, and dataset helpers used by `knn_main.py`.                         |
-| `TF/`                | Experiment         | TensorFlow prototypes (`gpu_test.py`, `neural_network.py`).                                         |
-| `scratch/`           | Experiment         | Throwaway explorations for quick algorithm checks.                                                  |
+This guide contains the operational information needed to set up, run, test, package, and release NeuralNetworks.
 
 ## Environment And Setup
 
@@ -60,15 +33,6 @@ This guide contains operational repository information for maintainers and agent
 
 - `games-theory-init [path] [--overwrite] [--generate-internals]`: copies packaged defaults into `<path>/data/`, writes `resource_path`, and optionally regenerates derived files.
 - `games-theory <player_points> <ai_points> <cells...> [--config DIR]`: validates board length, loads config/resources, triggers the predictor loop, and writes the selected move as `{"x": <column>, "y": <row>}` to standard output (`null` when no legal move exists). Coordinates are zero-based from the top-left; diagnostics are written to standard error.
-- `games_theory/resources/resource.py`: owns `Resource.load/save`, `copy_defaults`, `generate_qtable_file`, and `generate_state_file`.
-- `games_theory/src/default_predictor.py`: orchestrates evaluation and action selection.
-- `games_theory/src/config_repository.py`: loads typed game configuration for the CLI/process boundary.
-- `games_theory/src/domain_types.py`: defines shared state, points, pending-move, configuration, and Q-table contracts.
-- `games_theory/src/predictor/state_encoder.py`: maps external `X/O/N` boards into bot-relative canonical states.
-- `games_theory/src/predictor/state_repository.py`: owns `state.json` reads/writes for pending moves.
-- `games_theory/src/predictor/qtable_repository.py`: owns `qtable.json` reads/writes and lazy neighbour registration.
-- `games_theory/src/generator.py`: enumerates bot moves for canonical board states.
-- `games_theory/src/move_coordinate_deriver.py`: provides `MoveCoordinateDeriver`, which validates a selected transition and maps its changed row-major cell to the public `MoveCoordinate` contract.
 
 ### Configuration And Data Assets
 
@@ -90,11 +54,11 @@ This guide contains operational repository information for maintainers and agent
 
 ### Testing
 
-- `games_theory/test/src/test_default_predictor.py`: verifies pending-move persistence and the Q-update rule.
-- `games_theory/test/src/test_generator.py`: verifies canonical neighbour generation for bot moves.
-- `games_theory/test/src/test_state_encoder.py`: verifies `X/O/N` to `-1/0/1` normalization relative to `ai-char`.
-- `games_theory/test/src/test_move_coordinate_deriver.py`: verifies legal transition validation and row-major state-to-coordinate conversion.
-- `games_theory/test/resources/`: verifies resource copy/save helpers.
+- Predictor tests cover pending-move persistence and the Q-update rule.
+- Generator tests cover canonical neighbour generation for bot moves.
+- State-encoding tests cover `X/O/N` normalization relative to `ai-char`.
+- Coordinate tests cover legal transition validation and row-major state-to-coordinate conversion.
+- Resource tests cover default copying, loading, and saving.
 
 ### Release Workflow
 
@@ -105,35 +69,25 @@ Pull request titles and commit subjects must follow the conventional format docu
 
 ## Experiment Sandboxes
 
-- `nn/`: `Perceptron`, `NnCore`, and associated tests; invoked by `nn/nn_main.py`.
-- `knn/`: distance calculation, neighbor voting, harmonic weighting; exercised via `knn_main.py`.
-- `TF/`: TensorFlow GPU validation and prototype network definitions.
-- `scratch/`: quick experiments such as line separation scripts and logic gate demos.
-- Install only the selected sandbox dependencies with `pip install -r <area>/requirements.txt`, where `<area>` is `nn`, `knn`, `TF`, or `scratch`.
-- Testing expectation: prioritize correctness and learning value; production packaging rigor is not required unless the change crosses production boundaries.
+The experimental areas cover perceptrons and feed-forward networks, k-NN distance and voting strategies, TensorFlow/GPU checks, and small algorithm prototypes. Each area owns an independent dependency set that can be installed with:
+
+```bash
+pip install -r <area>/requirements.txt
+```
+
+Supported values for `<area>` are `nn`, `knn`, `TF`, and `scratch`. Experimental verification prioritizes algorithmic correctness and reproducibility rather than production packaging.
 
 ## Tooling And Scripts
 
 - `games_theory/requirements.txt`: production runtime compatibility and test coverage dependencies; `pyproject.toml` remains authoritative for installed package runtime dependencies.
 - `scripts/requirements.txt`: complete production-verification environment, including `games_theory/requirements.txt` and package build tooling.
 - `nn/requirements.txt`, `knn/requirements.txt`, `TF/requirements.txt`, `scratch/requirements.txt`: sandbox-specific dependencies derived from each area's imports.
-- `chess_runtime.sh`: helper script for chess-oriented experiments; inspect parameters before running.
 - `scripts/workflow/`: release automation helpers used by GitHub Actions and their deterministic checks.
 - `scripts/workflow/build_dependency_lock.sh`: generates and verifies the release dependency lock in a clean environment, including universal-wheel availability and CLI smoke checks.
 - `scripts/workflow/generate_dependency_lock.py`: reads runtime requirements from the built wheel metadata and uses `pip-compile` to emit exact transitive pins with SHA-256 hashes.
-- `scripts/verify.sh`: repeatable agent verification: compile production code, run unit, release tooling tests and build package artifacts.
+- `scripts/verify.sh`: repeatable verification: compile production code, run unit, release tooling tests and build package artifacts.
 - `scripts/tictactoe_rebuild.sh`: reinstall package locally and optionally reset tic-tac-toe resources; pass `--reset` as the second argument for non-interactive reset.
 - `scripts/tictactoe_run.sh`: run a tic-tac-toe CLI smoke command against generated resources.
 - `dist/`: output of `flit build`; clean if artifacts become stale.
 
-Repeatable workflows, smoke tests, and agent verification belong under `scripts/**`. Keep Bash scripts deterministic and shell-safe with `set -euo pipefail`. Document user-facing scripts here or in the root `README.md`; GitHub Actions Python helpers belong under `scripts/workflow/**`.
-
-## Quality Reference
-
-- Follow `AGENTS.md` for agent routing and review policy.
-- Use `docs/domain/`, `docs/guidelines/`, and `docs/architecture/` as durable design context before changing production behaviour.
-- Plan non-trivial changes in `docs/projects/` before implementation, finish each process with a test phase, move durable outcomes/TODOs to docs, and delete completed plans.
-- Keep repeatable automation in `scripts/`.
-- Production work in `games_theory/**` demands API stability, packaging fidelity, and adequate tests.
-- Experimental directories focus on correctness and learning value.
-- Treat changes to `config.json`, `state.json`, and `qtable.json` formats as production changes even when they are made through tooling or documentation work.
+Shell automation is deterministic and fails safely with `set -euo pipefail`. Commands that overwrite local resources expose that behavior explicitly.

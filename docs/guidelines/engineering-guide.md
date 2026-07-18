@@ -1,17 +1,43 @@
 # Engineering Guide
 
-Use these guidelines when designing or reviewing changes. `AGENTS.md` decides which guideline applies to a task; this file captures project-level rules that should not be scattered through implementation comments.
+This guide defines how NeuralNetworks code should be designed, implemented, and tested.
 
-## Design Principles
+## Application Structure
 
-- Keep production code in `games_theory/**` explicit about persistence, CLI contracts, and resource ownership.
-- Put lifecycle and mode decisions in the upper-level orchestrator; lower-level services should expose explicit operations instead of boolean switches that change persistence or side effects.
-- Prefer small composed services over broad classes when a component owns a distinct persistence or policy concern.
-- Keep experimental directories lightweight; do not introduce production-grade structure there unless it fixes a concrete problem.
-- Update documentation in the same change when behaviour, public CLI usage, persistence format, or architecture flow changes.
-- Plan non-trivial changes in `docs/projects/**` before implementation, finish with a test phase, then delete completed project plans after durable docs/TODOs are updated.
-- Store repeatable process automation and verification commands under `scripts/**`.
-- Write documentation, plans, scripts, and code in English.
+- Keep the CLI and other entry points responsible for input parsing, dependency construction, and top-level workflow selection.
+- Keep game rules, state encoding, learning policy, and move selection independent of CLI parsing and filesystem formats.
+- Put lifecycle and mode decisions in the top-level orchestrator; lower-level services should expose explicit operations instead of boolean switches that alter persistence or side effects.
+- Isolate configuration, state, and Q-table persistence behind repositories with clear ownership of each resource.
+- Inject configuration, randomness, and persistence collaborators when business logic needs them; do not construct external dependencies deep inside domain logic.
+- Prefer small components with one reason to change over broad classes that combine policy, orchestration, and persistence.
+- Keep experimental code lightweight and local to the experiment until a repeated need justifies extraction.
+
+## Domain Types And State
+
+- Represent board state, points, pending moves, configuration, Q-table entries, and public move coordinates with explicit types.
+- Normalize external `X`, `O`, and `N` symbols at the application boundary; learning logic should operate on bot-relative canonical state.
+- Keep row-major indexing and zero-based public coordinates explicit at conversion boundaries.
+- Validate state transitions before deriving a move or applying a learning update.
+- Keep persistent resource schemas independent from incidental in-memory implementation details.
+- Treat absent state, malformed state, and a valid empty state as different conditions.
+
+## Error Handling And Public Interfaces
+
+- Validate CLI arguments and configuration before starting prediction or mutating persisted state.
+- Return contextual errors from parsing, validation, persistence, state encoding, and prediction paths.
+- Do not silently recover from malformed configuration or persisted learning data when doing so could overwrite user state.
+- Write only the documented machine-readable result to standard output; send diagnostics to standard error.
+- Keep public CLI behavior and importable APIs backward-compatible unless an intentional contract change includes migration and regression coverage.
+- Make initialization, overwrite, reset, read-only, and learning operations explicit rather than inferring them from ambiguous flags.
+
+## Persistence And Side Effects
+
+- Use the owning repository or resource service for reads and writes instead of accessing JSON files from orchestration or policy code.
+- Keep configuration, pending-move state, and learned Q-values in separate resources because they have different lifecycles.
+- Persist related state changes in a deliberate order and avoid leaving partially updated resources after a failure.
+- Do not overwrite user resources outside an explicit initialization or reset operation.
+- Keep reusable package code independent of the repository checkout and current working directory.
+- Make randomness an explicit policy dependency when deterministic behavior is needed for tests.
 
 ## Anti-patterns
 
@@ -21,29 +47,20 @@ Use these guidelines when designing or reviewing changes. `AGENTS.md` decides wh
 - Do not silently overwrite user resources outside explicit init/reset workflows.
 - Do not hide write/read-only mode changes behind generic boolean flags inside lower-level services; split the operation and let the orchestrator choose.
 
-## Documentation Standard
+## Testing
 
-- Root `README.md` is a short visitor overview: motivation, purpose, and links to concrete docs.
-- Root `AGENTS.md` is the agent orchestrator: it contains task-to-document routing and repository-specific agent instructions, while detailed standards and checklists live under `docs/**`.
-- `docs/domain/**` contains domain language, rules, and bounded-context notes split by concrete domain.
-- `docs/guidelines/**` contains engineering rules, review expectations, documentation standards, repository guide, and anti-patterns.
-- `docs/architecture/**` contains diagrams and integration/control-flow descriptions.
-- `docs/projects/**` contains temporary active project plans; completed plans are deleted after tests.
-- `docs/guidelines/repository-guide.md` contains repository map, setup, workflows, testing, tooling, and release notes.
-- `scripts/**` contains repeatable automation and verification entry points.
+- Unit-test state normalization, neighbour generation, Q-value updates, reward calculation, transition validation, and coordinate derivation.
+- Cover malformed inputs, incompatible resource data, missing files, empty legal-move sets, and persistence failures.
+- Use temporary resources and injected collaborators instead of modifying packaged defaults or user data in tests.
+- Keep tests deterministic by controlling randomness and filesystem state.
+- Add a regression test for every corrected prediction, persistence, or public-interface bug.
+- Test experiments at the level needed to protect their algorithmic result without imposing production structure that provides no concrete benefit.
 
-When changing documentation:
-
-- Keep links current after moves or renames.
-- Put durable information in the most focused domain, guideline, architecture, or research document instead of a temporary plan or catch-all file.
-- Keep active plans under `docs/projects/**` and remove them only through the project lifecycle closeout.
-- Write documentation and plans in English.
-
-## Review Standard
+## Code Review Standard
 
 - Focus on correctness, behavioural regressions, user-data loss, persistence safety, public contract changes, and missing tests.
 - Make findings actionable by explaining the impact and pointing to specific files and lines.
 - Avoid cosmetic findings unless they hide a functional problem or make domain or persistence semantics unclear.
-- For production changes, use `docs/guidelines/production-package-guide.md` as the detailed checklist.
-- For experimental code, prioritize algorithmic correctness and clarity; require production-grade structure only when a concrete risk justifies it.
-- For documentation changes, verify ownership, consistency, and links rather than duplicating the same guidance across entry points.
+- Verify that abstractions reduce coupling without hiding game rules, learning semantics, or side effects.
+- Require tests for changed parsing, state transitions, learning policy, persistence, and failure handling.
+- For experimental code, prioritize algorithmic correctness and clarity; require additional structure only when a concrete risk justifies it.
