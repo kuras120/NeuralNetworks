@@ -24,10 +24,10 @@ jobs:
         with:
           ref: ${{ env.RELEASE_BRANCH }}
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.9
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.9"
 
       - name: Install dependencies
         run: pip install -r games_theory/requirements.txt
@@ -98,18 +98,21 @@ jobs:
         with:
           ref: ${{ env.RELEASE_COMMIT_SHA }}
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.9
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.9"
 
       - name: Install build tooling
         run: |
           python -m pip install --upgrade pip
-          python -m pip install build
+          python -m pip install -r scripts/requirements.txt
 
       - name: Build distribution
         run: python -m build
+
+      - name: Build and verify runtime dependency lock
+        run: scripts/workflow/build_dependency_lock.sh "${{ env.VERSION }}"
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -150,6 +153,7 @@ jobs:
           files: |
             build/dist/*.whl
             build/dist/*.tar.gz
+            build/dist/*.lock
           tag_name: ${{ env.VERSION }}
           name: ${{ env.VERSION }}
           body_path: release-notes.md

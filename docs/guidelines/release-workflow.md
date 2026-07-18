@@ -46,6 +46,34 @@ Release helper scripts live under `scripts/`:
 - `scripts/workflow/generate_release_notes.py`: generates the Markdown release body from git commits.
 - `scripts/workflow/create_version_update_pr.py`: creates the post-release pull request for the next development version.
 - `scripts/workflow/workflow_common.py`: keeps shared version parsing and `pyproject.toml` updates out of the workflow entry points.
+- `scripts/workflow/generate_dependency_lock.py`: reads the built release wheel metadata and generates the versioned, hashed runtime dependency lock.
+- `scripts/workflow/build_dependency_lock.sh`: verifies universal dependency artifacts, installs the lock and wheel in a clean environment, runs `pip check`, and smoke-tests both package CLIs.
+
+## Runtime Dependency Contract
+
+Every GitHub release publishes the project wheel, source distribution, and a lockfile named:
+
+```text
+games-theory-X.Y.Z-requirements.lock
+```
+
+The lockfile is generated from the `Requires-Dist` metadata in the wheel built from the exact release commit. It uses pip requirements syntax and contains the complete transitive runtime dependency closure as exact `==` pins with SHA-256 hashes. Test, coverage, and build-only dependencies are not part of this artifact.
+
+The application consuming the release owns only the selected `games-theory` version. It downloads the wheel and matching lockfile from that GitHub release, then installs them in this order while its build environment has package-index access:
+
+```bash
+python -m pip install \
+  --require-hashes \
+  -r games-theory-X.Y.Z-requirements.lock
+
+python -m pip install \
+  --no-deps \
+  games_theory-X.Y.Z-py3-none-any.whl
+```
+
+The separate `--no-deps` wheel installation is required: it prevents pip from resolving a dependency set different from the library-owned lock. The completed consuming application is responsible for packaging that installed Python environment when its target client must run without Internet access.
+
+Lock generation runs under the lowest supported Python version, currently Python 3.9. Before publication, the workflow requires universal binary artifacts for the resolved dependencies, performs a hash-checked clean installation, checks package consistency, initializes resources, and invokes the game CLI. A version mismatch, missing hash, unsupported environment marker, unavailable universal wheel, failed installation, or failed smoke test stops publication.
 
 ## Release Notes Format
 
