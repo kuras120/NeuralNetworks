@@ -21,7 +21,6 @@ jobs:
     secrets: inherit
 
   prepare:
-    needs: test
     runs-on: ubuntu-latest
     outputs:
       VERSION: ${{ steps.version.outputs.VERSION }}
