@@ -98,7 +98,7 @@ This guide contains operational repository information for maintainers and agent
 
 ### Release Workflow
 
-Releases are manual GitHub Actions runs from GitHub's built-in branch selector. Long-lived branches store the next development version in `pyproject.toml` using PEP 440 `.dev0`; leave the optional `version` input empty to release that clean base version, or enter an explicit `X.Y.Z` version to override it. The workflow builds artifacts and tags the clean release-version commit, generates structured release notes from merged pull requests since the previous semver tag, and opens a post-release pull request that moves the selected branch to the next patch `.dev0` version. Release helper scripts and deterministic release tooling tests live in `scripts/workflow/`.
+Releases are manual GitHub Actions runs from GitHub's built-in branch selector. Long-lived branches store the next development version in `pyproject.toml` using PEP 440 `.dev0`; leave the optional `version` input empty to release that clean base version, or enter an explicit `X.Y.Z` version to override it. The workflow builds artifacts and tags the clean release-version commit, generates a versioned, hash-verified runtime dependency lock beside the wheel, generates structured release notes from merged pull requests since the previous semver tag, and opens a post-release pull request that moves the selected branch to the next patch `.dev0` version. Release helper scripts and deterministic release tooling tests live in `scripts/workflow/`.
 
 See `docs/guidelines/release-workflow.md` for version selection, release-note grouping, and verification details.
 Pull request titles and commit subjects must follow the conventional format documented there. Pull request title prefixes drive release-note categorization, while matching commit subjects keep repository history consistent.
@@ -118,7 +118,9 @@ Pull request titles and commit subjects must follow the conventional format docu
 - `scripts/requirements.txt`: complete production-verification environment, including `games_theory/requirements.txt` and package build tooling.
 - `nn/requirements.txt`, `knn/requirements.txt`, `TF/requirements.txt`, `scratch/requirements.txt`: sandbox-specific dependencies derived from each area's imports.
 - `chess_runtime.sh`: helper script for chess-oriented experiments; inspect parameters before running.
-- `scripts/workflow/`: Python helpers used by GitHub Actions release automation and their deterministic checks.
+- `scripts/workflow/`: release automation helpers used by GitHub Actions and their deterministic checks.
+- `scripts/workflow/build_dependency_lock.sh`: generates and verifies the release dependency lock in a clean environment, including universal-wheel availability and CLI smoke checks.
+- `scripts/workflow/generate_dependency_lock.py`: reads runtime requirements from the built wheel metadata and uses `pip-compile` to emit exact transitive pins with SHA-256 hashes.
 - `scripts/verify.sh`: repeatable agent verification: compile production code, run unit, release tooling tests and build package artifacts.
 - `scripts/tictactoe_rebuild.sh`: reinstall package locally and optionally reset tic-tac-toe resources; pass `--reset` as the second argument for non-interactive reset.
 - `scripts/tictactoe_run.sh`: run a tic-tac-toe CLI smoke command against generated resources.

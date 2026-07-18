@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 
 
@@ -19,6 +20,8 @@ PREPARE_BRANCH = WORKFLOW_SCRIPTS / "prepare_release_branch.py"
 SET_VERSION = WORKFLOW_SCRIPTS / "set_package_version.py"
 NOTES = WORKFLOW_SCRIPTS / "generate_release_notes.py"
 CREATE_PR = WORKFLOW_SCRIPTS / "create_version_update_pr.py"
+DEPENDENCY_LOCK = WORKFLOW_SCRIPTS / "generate_dependency_lock.py"
+BUILD_DEPENDENCY_LOCK = WORKFLOW_SCRIPTS / "build_dependency_lock.sh"
 WORKFLOW = ROOT / ".github" / "workflows" / "release.yml"
 
 
@@ -33,6 +36,21 @@ def load_release_notes_module():
 
 
 GENERATE_RELEASE_NOTES = load_release_notes_module()
+
+
+def load_dependency_lock_module():
+    spec = importlib.util.spec_from_file_location(
+        "generate_dependency_lock", DEPENDENCY_LOCK
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Cannot load generate_dependency_lock.py")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+GENERATE_DEPENDENCY_LOCK = load_dependency_lock_module()
 
 
 def run(
@@ -64,6 +82,90 @@ def init_repo(path: Path, version: str = "0.0.0") -> None:
     )
     run(["git", "add", "pyproject.toml"], path)
     run(["git", "commit", "-m", "docs: initial"], path)
+
+
+def create_test_wheel(
+    path: Path,
+    version: str = "1.2.3",
+    requirements: tuple[str, ...] = ("jsbeautifier>=1.14.0",),
+) -> None:
+    metadata = [
+        "Metadata-Version: 2.1",
+        "Name: games-theory",
+        f"Version: {version}",
+    ]
+    metadata.extend(f"Requires-Dist: {requirement}" for requirement in requirements)
+    metadata.append("")
+    with zipfile.ZipFile(path, "w") as archive:
+        archive.writestr(
+            f"games_theory-{version}.dist-info/METADATA",
+            "\n".join(metadata),
+        )
+
+
+def test_dependency_lock_helpers() -> None:
+    digest = "a" * 64
+    valid_lock = (
+        f"editorconfig==0.17.1 \\\n    --hash=sha256:{digest}\n"
+        f"jsbeautifier==1.15.4 \\\n    --hash=sha256:{digest}\n"
+        f"six==1.17.0 \\\n    --hash=sha256:{digest}\n"
+    )
+    expected = {"editorconfig", "jsbeautifier", "six"}
+    assert GENERATE_DEPENDENCY_LOCK.validate_lock_content(valid_lock) == expected
+    GENERATE_DEPENDENCY_LOCK.validate_lock_content(valid_lock, expected)
+    assert (
+        GENERATE_DEPENDENCY_LOCK.lock_artifact_name("1.2.3")
+        == "games-theory-1.2.3-requirements.lock"
+    )
+
+    command = GENERATE_DEPENDENCY_LOCK.compile_command(
+        Path("requirements.in"), Path("requirements.lock")
+    )
+    assert "--generate-hashes" in command
+    assert "--no-config" in command
+    assert "--no-emit-index-url" in command
+
+    for invalid_lock in (
+        "jsbeautifier>=1.14.0\n",
+        "jsbeautifier==1.15.4\n",
+        f"jsbeautifier==1.15.4; python_version > '3.9' --hash=sha256:{digest}\n",
+    ):
+        try:
+            GENERATE_DEPENDENCY_LOCK.validate_lock_content(invalid_lock)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError(f"Invalid lock was accepted: {invalid_lock}")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        directory = Path(tmp)
+        wheel = directory / "games_theory-1.2.3-py3-none-any.whl"
+        create_test_wheel(wheel)
+        assert GENERATE_DEPENDENCY_LOCK.find_release_wheel(directory, "1.2.3") == wheel
+        assert GENERATE_DEPENDENCY_LOCK.read_wheel_runtime_requirements(
+            wheel, "1.2.3"
+        ) == ["jsbeautifier>=1.14.0"]
+
+        try:
+            GENERATE_DEPENDENCY_LOCK.read_wheel_runtime_requirements(wheel, "1.2.4")
+        except ValueError as error:
+            assert "does not match" in str(error)
+        else:
+            raise AssertionError("Wheel version mismatch was accepted")
+
+        marked_wheel = directory / "marked.whl"
+        create_test_wheel(
+            marked_wheel,
+            requirements=("jsbeautifier>=1.14.0; python_version >= '3.9'",),
+        )
+        try:
+            GENERATE_DEPENDENCY_LOCK.read_wheel_runtime_requirements(
+                marked_wheel, "1.2.3"
+            )
+        except ValueError as error:
+            assert "Environment-marked" in str(error)
+        else:
+            raise AssertionError("Environment marker was accepted")
 
 
 def test_prepare_release() -> None:
@@ -484,11 +586,22 @@ def test_release_workflow_branch_input() -> None:
     assert "ref: ${{ env.RELEASE_COMMIT_SHA }}" in content
     assert "target_commitish: ${{ env.RELEASE_COMMIT_SHA }}" in content
     assert "name: ${{ env.VERSION }}" in content
+    assert "python-version: \"3.9\"" in content
+    assert 'build_dependency_lock.sh "${{ env.VERSION }}"' in content
+    assert "build/dist/*.lock" in content
     assert '--base "${{ env.RELEASE_BRANCH }}"' in content
     assert '--head "${{ env.RELEASE_UPDATE_BRANCH }}"' in content
 
+    lock_script = BUILD_DEPENDENCY_LOCK.read_text(encoding="utf-8")
+    assert "set -euo pipefail" in lock_script
+    assert "generate_dependency_lock.py" in lock_script
+    assert "--require-hashes" in lock_script
+    assert "--no-deps" in lock_script
+    assert "--platform any" in lock_script
+
 
 def main() -> int:
+    test_dependency_lock_helpers()
     test_prepare_release()
     test_prepare_release_uses_branch_local_previous_tag()
     test_prepare_release_rejects_branch_local_downgrade()
