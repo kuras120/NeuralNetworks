@@ -1,17 +1,14 @@
 # NeuralNetworks
 
-NeuralNetworks is a machine-learning playground and a growing game-theory package. The repository combines exploratory ML experiments with a production-oriented Python library for Q-learning in turn-based games.
+NeuralNetworks is a Python project for exploring machine-learning algorithms and developing a reusable Q-learning backend for turn-based games. It combines lightweight neural-network, k-NN, and TensorFlow experiments with the production-oriented `games-theory` package.
 
-The main practical target today is a reusable Q-learning backend for games like tic-tac-toe. The longer-term direction is to keep extending the same ideas toward richer turn-based domains, including chess experiments.
-
-## What Is Inside
-
-- `games_theory/`: installable Python package with CLI tools, resource management, and a Q-learning predictor loop.
-- `nn/`, `knn/`, `TF/`, `scratch/`: experimental sandboxes for neural networks, k-NN, TensorFlow checks, and quick prototypes.
+The current practical use case is a CLI-driven predictor for games such as tic-tac-toe. The experimental areas remain intentionally small and support learning, comparison, and prototyping rather than production deployment.
 
 ## Documentation
 
 - Repository guide: [`docs/guidelines/repository-guide.md`](docs/guidelines/repository-guide.md)
+- Game-theory domain: [`docs/domain/games-theory-domain.md`](docs/domain/games-theory-domain.md)
+- Machine-learning sandbox domain: [`docs/domain/ml-sandbox-domain.md`](docs/domain/ml-sandbox-domain.md)
 
 ## Quick Start
 
@@ -21,4 +18,4 @@ python -m venv .venv && source .venv/bin/activate
 ./scripts/tictactoe_run.sh ./demo
 ```
 
-For CLI examples and detailed workflows, use the repository guide.
+The repository guide contains setup, CLI, testing, packaging, and release details.
