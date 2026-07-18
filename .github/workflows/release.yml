@@ -17,32 +17,8 @@ permissions:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ env.RELEASE_BRANCH }}
-
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.9"
-
-      - name: Install dependencies
-        run: pip install -r games_theory/requirements.txt
-
-      - name: Run unittests
-        run: coverage run -m unittest discover games_theory
-
-      - name: Create coverage report
-        run: coverage xml
-
-      - name: Upload coverage report
-        if: success()
-        env:
-          CODACY_PROJECT_TOKEN: ${{ secrets.CODACY_PROJECT_TOKEN }}
-        run: bash <(curl -Ls https://coverage.codacy.com/get.sh) report -l Python -r coverage.xml
+    uses: ./.github/workflows/test.yml
+    secrets: inherit
 
   prepare:
     runs-on: ubuntu-latest
