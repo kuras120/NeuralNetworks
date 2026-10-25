@@ -64,8 +64,7 @@ jobs:
 
   build:
     needs: [test, prepare, release_branch]
-    # Keep the Python 3.9 lock-generation environment on a supported runner.
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     env:
       VERSION: ${{ needs.prepare.outputs.VERSION }}
       RELEASE_COMMIT_SHA: ${{ needs.release_branch.outputs.RELEASE_COMMIT_SHA }}
@@ -75,10 +74,10 @@ jobs:
         with:
           ref: ${{ env.RELEASE_COMMIT_SHA }}
 
-      - name: Set up Python 3.9
+      - name: Set up Python 3.14
         uses: actions/setup-python@v5
         with:
-          python-version: "3.9"
+          python-version: "3.14"
 
       - name: Install build tooling
         run: |

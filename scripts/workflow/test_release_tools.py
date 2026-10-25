@@ -586,7 +586,7 @@ def test_release_workflow_branch_input() -> None:
     assert "ref: ${{ env.RELEASE_COMMIT_SHA }}" in content
     assert "target_commitish: ${{ env.RELEASE_COMMIT_SHA }}" in content
     assert "name: ${{ env.VERSION }}" in content
-    assert "python-version: \"3.9\"" in content
+    assert "python-version: \"3.14\"" in content
     assert 'build_dependency_lock.sh "${{ env.VERSION }}"' in content
     assert "build/dist/*.lock" in content
     assert '--base "${{ env.RELEASE_BRANCH }}"' in content

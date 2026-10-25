@@ -19,7 +19,7 @@ python3 -m pip download \
     --require-hashes \
     --only-binary=:all: \
     --platform any \
-    --python-version 3.9 \
+    --python-version 3.14 \
     --implementation py \
     --abi none \
     --dest build/universal-dependencies \

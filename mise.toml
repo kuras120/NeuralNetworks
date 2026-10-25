@@ -1,5 +1,5 @@
 [tools]
-python = "3.9"
+python = "3.14"
 
 [env]
 _.python.venv = { path = ".venv-mise", create = true, uv_create_args = ["--seed"] }

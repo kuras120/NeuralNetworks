@@ -6,7 +6,7 @@ The current practical use case is a CLI-driven predictor for games such as tic-t
 
 ## Quickstart
 
-Python 3.9+ is supported. `mise.toml` selects 3.9 to match CI and release-lock generation. Run from the repository root:
+Python 3.14+ is supported. `mise.toml` selects 3.14 to match CI and release-lock generation. Run from the repository root:
 
 ```bash
 mise trust
