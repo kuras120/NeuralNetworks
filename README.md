@@ -1,21 +1,26 @@
 # NeuralNetworks
 
-NeuralNetworks is a Python project for exploring machine-learning algorithms and developing a reusable Q-learning backend for turn-based games. It combines lightweight neural-network, k-NN, and TensorFlow experiments with the production-oriented `games-theory` package.
+A machine-learning playground with neural-network, k-NN and TensorFlow experiments, plus an installable Q-learning backend for turn-based games in `games_theory/`.
 
-The current practical use case is a CLI-driven predictor for games such as tic-tac-toe. The experimental areas remain intentionally small and support learning, comparison, and prototyping rather than production deployment.
+The current practical use case is a CLI-driven predictor for games such as tic-tac-toe; the sandboxes support learning, comparison and prototyping.
 
-## Documentation
+## Quickstart
 
-- Repository guide: [`docs/guidelines/repository-guide.md`](docs/guidelines/repository-guide.md)
-- Game-theory domain: [`docs/domain/games-theory-domain.md`](docs/domain/games-theory-domain.md)
-- Machine-learning sandbox domain: [`docs/domain/ml-sandbox-domain.md`](docs/domain/ml-sandbox-domain.md)
-
-## Quick Start
+Python 3.14+ is supported. `mise.toml` selects 3.14 to match CI and release-lock generation. Run from the repository root:
 
 ```bash
-python -m venv .venv && source .venv/bin/activate
-./scripts/tictactoe_rebuild.sh ./demo --reset
-./scripts/tictactoe_run.sh ./demo
+mise trust
+mise install
+mise exec -- python -m pip install -e . -r scripts/requirements.txt
+# Use a fresh directory for the demo resources.
+mise exec -- games-theory-init ./demo
+mise exec -- ./scripts/tictactoe_run.sh ./demo
 ```
 
-The repository guide contains setup, CLI, testing, packaging, and release details.
+The packaged demo uses a 4×4 board. The CLI returns a JSON move; diagnostics go to stderr. For ML experiments, install `<area>/requirements.txt` (`nn`, `knn`, `TF` or `scratch`).
+
+Mise creates an isolated `.venv-mise` environment. Validation: `mise run verify`. Without mise, create and activate a virtual environment with a supported Python, install the same dependencies, and run `./scripts/verify.sh`.
+
+## Links
+
+[Usage](docs/usage.md) · [Architecture](docs/architecture/runtime.md) · [Game domain](docs/domain/games-theory-domain.md) · [ML domains](docs/domain/ml-sandbox-domain.md) · [Releases](docs/release.md) · [Research](docs/research/) · [INBOX](INBOX.md) · [Agent instructions](AGENTS.md)
