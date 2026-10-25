@@ -64,7 +64,8 @@ jobs:
 
   build:
     needs: [test, prepare, release_branch]
-    runs-on: ubuntu-latest
+    # Keep the Python 3.9 lock-generation environment on a supported runner.
+    runs-on: ubuntu-24.04
     env:
       VERSION: ${{ needs.prepare.outputs.VERSION }}
       RELEASE_COMMIT_SHA: ${{ needs.release_branch.outputs.RELEASE_COMMIT_SHA }}
