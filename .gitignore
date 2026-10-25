@@ -8,3 +8,6 @@
 #flit build
 /dist
 /data
+
+# mise-managed Python environment
+/.venv-mise/

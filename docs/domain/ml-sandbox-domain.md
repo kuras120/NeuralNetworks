@@ -1,27 +1,17 @@
-# Machine Learning Sandbox Domain
+# ML Sandbox Domains
 
-This document defines the purpose, language, and boundaries of the exploratory machine-learning sandboxes.
-
-## Bounded Context
-
-| Context | Responsibility |
+| Area | Scope |
 | --- | --- |
-| Neural Network Experiments | Prototype perceptron and feed-forward neural-network behaviour. |
-| k-NN Experiments | Explore distance metrics, neighbour voting, weighting, and charting. |
-| TensorFlow Prototypes | Validate TensorFlow/GPU setup and prototype network definitions. |
-| Scratch Space | Hold quick checks, sample data, and disposable algorithm explorations. |
+| `nn/` | Perceptron and feed-forward neural networks |
+| `knn/` | Distance metrics, neighbour voting, weighting and charting |
+| `TF/` | TensorFlow/GPU checks and network prototypes |
+| `scratch/` | Small algorithm explorations and quick checks |
 
-## Ubiquitous Language
+| Term | Meaning |
+| --- | --- |
+| Experiment | Local algorithm exploration without production packaging guarantees. |
+| Prototype | Trial implementation before any deliberate production adoption. |
+| Dataset | Input interpreted under the experiment's assumptions. |
+| Smoke check | Quick run confirming the expected input shape still works. |
 
-- **Experiment**: localized code used to test an algorithmic idea without production packaging guarantees.
-- **Prototype**: implementation intended for learning or validation before any production extraction.
-- **Dataset**: input data used by an experiment and interpreted under that experiment's assumptions.
-- **Smoke check**: lightweight command that proves a prototype still runs for its expected input shape.
-
-## Domain Rules
-
-- Sandboxes optimize for correctness, clarity, and research velocity rather than packaging guarantees.
-- Keep experiment-specific abstractions local until there is a repeated, concrete need to share them.
-- Do not impose production package structure on experiments unless it fixes a real maintenance or correctness problem.
-- Reproducible results identify the relevant dataset, dependency versions, parameters, and sources of randomness.
-- Prototype behavior is not a production contract until it is deliberately adopted by a production domain.
+Experiments test ideas with local datasets and assumptions. Reproducible results identify the dataset, dependency versions, parameters and sources of randomness. Prototype behaviour becomes a production contract only through deliberate adoption. Prioritize algorithmic correctness, clarity and reproducibility; document non-obvious inputs near the code. Keep abstractions local until sharing solves a concrete problem. Production extraction belongs in `games_theory/` and its [domain documentation](games-theory-domain.md).

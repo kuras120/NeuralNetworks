@@ -1,0 +1,9 @@
+[tools]
+python = "3.9"
+
+[env]
+_.python.venv = { path = ".venv-mise", create = true, uv_create_args = ["--seed"] }
+
+[tasks.verify]
+description = "Acceptance checks: compile, unit tests, release tooling and package build"
+run = "./scripts/verify.sh"
